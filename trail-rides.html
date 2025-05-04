@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Rides - Misty Manor</title>
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="images/MMIcon.png" type="image/png">
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="images/MMLogo.png" alt="Misty Manor Logo">
+                </a>
+            </div>
+            <nav class="desktop-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">About</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="trail-rides.html">Trail Rides &emsp;🏞️🥾🌲</a></li>
+                            <li><a href="lessons.html">Lessons &emsp;📚</a></li>
+                            <li><a href="volunteering.html">Volunteering &emsp;🙋</a></li>
+                            <l1><a href="meet-horses.html">Our Horses &nbsp; &nbsp; &nbsp; &nbsp; 🐴❤️</a></l1>
+                            <li><a href="whats-new.html">What's New &emsp;🤩🎉</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger-menu">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav">
+        <div class="mobile-nav-container">
+            <div class="mobile-nav-header">
+                <div class="close-btn">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+            </div>
+            <nav class="mobile-menu">
+                <ul class="main-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="submenu-toggle">About <span class="arrow">›</span></a>
+                    </li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+                <ul class="submenu">
+                    <li class="back-btn"><a href="#">« Back</a></li>
+                    <li><a href="trail-rides.html">Trail Rides &emsp;🏞️🥾🌲</a></li>
+                    <li><a href="lessons.html">Lessons &emsp;📚</a></li>
+                    <li><a href="volunteering.html">Volunteering &emsp;🙋</a></li>
+                    <l1><a href="meet-horses.html">Our Horses &nbsp; &nbsp; &nbsp; 🐴❤️</a></l1>
+                    <li><a href="whats-new.html">What's New &emsp;🤩🎉</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Hero Banner Section -->
+    <section class="hero hero-with-title">
+        <div class="hero-image">
+            <img src="images/MMTrailRidesBanner.jpeg" alt="Misty Manor Trail Rides">
+        </div>
+        <div class="hero-title-overlay">
+            <h1>Trail Rides</h1>
+        </div>
+    </section>
+
+    <!-- Main Content Section -->
+    <section class="main-content">
+        <div class="container">
+            <h1>Misty Manor is the <b>perfect</b> place to build bonds and get away with friends and family!</h1>
+            <h2>Ready to schedule your trip to Misty Manor?</h2>
+            <br/>
+            <p>Misty Manor offers trail rides most days of the week. In addition, in the spring and fall, once a month we offer a 5-hour ride out to a restaurant for lunch and in the fall we offer a ride that goes out at dusk and riders return to enjoy a bonfire. So call the barn to find out more information or to be added to our notification list!</p>
+            <br/>
+            <h2>(We can’t book a ride for you via email or text.  We need to speak with you.)</h2>
+            <br/>
+            <br/>
+            <h1>Call to schedule your ride today!</h1>
+            <div class="buttons">
+                <a href="tel:+14432774693" class="btn">(443) 277-4693</a>
+            </div>
+            <br/>
+            <div class="booking-section">
+                <div class="buttons">
+                    <button id="open-booking" class="btn">Called? Book Now.</button>
+                </div>
+                
+                <!-- Password Prompt -->
+                <div id="booking-password-prompt" style="display:none; margin-top: 1em;">
+                    <input type="password" id="booking-password" placeholder="Enter password to book" class="password-input">
+                    <button id="confirm-password" class="btn small">Enter</button>
+                </div>
+                
+                <!-- Payment Step -->
+                <div id="payment-container" style="display:none; margin-top: 2em;">
+                    <div class="payment-box">
+                        <h2>Complete Payment to Book Your Ride</h2>
+                        <p>Before scheduling your ride, please complete your payment:</p>
+                        
+                        <div class="payment-options">
+                            <div class="payment-option">
+                                <input type="radio" id="deposit-payment" name="payment-amount" value="deposit" checked>
+                                <label for="deposit-payment">50% Deposit ($60)</label>
+                            </div>
+                            <div class="payment-option">
+                                <input type="radio" id="full-payment" name="payment-amount" value="full">
+                                <label for="full-payment">Full Payment ($120)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-form">
+                            <div class="form-group">
+                                <label for="card-number">Card Number</label>
+                                <input type="text" id="card-number" placeholder="1234 5678 9012 3456">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label for="expiry-date">Expiry Date</label>
+                                    <input type="text" id="expiry-date" placeholder="MM/YY">
+                                </div>
+                                <div class="form-group half">
+                                    <label for="cvv">CVV</label>
+                                    <input type="text" id="cvv" placeholder="123">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button id="process-payment" class="btn">Process Payment</button>
+                            </div>
+                            <p class="payment-note">For demonstration only. No actual payment will be processed.</p>
+                        </div>
+                        
+                        <!-- Alternative payment button (can link to Stripe) -->
+                        <div class="alternative-payment">
+                            <p>Or pay securely with Stripe:</p>
+                            <a class="btn stripe-btn" href="https://buy.stripe.com/test_paymentlink" target="_blank">
+                                Pay with Stripe
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading/Processing indicator -->
+                <div id="payment-processing" style="display:none; margin-top: 2em; text-align: center;">
+                    <div class="spinner"></div>
+                    <p>Processing your payment...</p>
+                </div>
+                
+                <!-- Booking Widget (only shown after payment) -->
+                <div id="booking-widget-container" style="display:none; margin-top: 2em;">
+                    <div class="payment-confirmation">
+                        <div class="confirmation-icon">✓</div>
+                        <h2>Payment Confirmed!</h2>
+                        <p>Your payment has been processed successfully. You can now schedule your ride below:</p>
+                    </div>
+                    <div class="booking-calendar">
+                        <iframe src="https://calendly.com/YOUR_USERNAME/YOUR_EVENT" width="100%" height="630" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p>Misty Manor Equestrian Center</p>
+                <p>7621 Ridge Road, Marriotsville, MD 21104</p>
+                <p>Phone: <a href="tel:+14432774693">(443) 277-4693</a> | Email: <a href="mailto:mistymanorfarmltd@gmail.com">mistymanorfarmltd@gmail.com</a></p>
+                <p>&copy; 2025 Misty Manor. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+    <script src="animations.js"></script>
+</body>
+</html>
+
