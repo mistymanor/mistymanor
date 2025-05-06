@@ -377,7 +377,7 @@ header .container {
 
 /* Footer */
 footer {
-    background-image: url('images/footer.jpeg');
+    background-image: url('/images/footer.jpeg');
     background-size: cover;
     background-position: center;
     color: white;
@@ -546,7 +546,7 @@ footer p {
     max-width: 800px;
     margin: 0 auto;
     color: #333;
-    background: url('images/MMTrailRidesBanner.jpeg') no-repeat center center;
+    background: url('/images/MMTrailRidesBanner.jpeg') no-repeat center center;
     background-size: cover;
     padding: 30px;
     border-radius: 10px;
