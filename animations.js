@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
         '.main-content p',
         '.contact-info',
         '.buttons',
-        'footer'
+        'footer',
+        'img'
     ];
     
     // Elements to exclude from animations
@@ -47,9 +48,22 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.forEach(el => {
             // Skip elements that match the excluded selectors
             if (!shouldExcludeElement(el)) {
-                setTimeout(() => {
-                    el.classList.add('fade-in');
-                }, delay);
+                if (el.tagName === 'IMG') {
+                    el.addEventListener('load', () => {
+                        setTimeout(() => {
+                            el.classList.add('fade-in');
+                        }, delay);
+                    });
+
+                    if (el.complete) {
+                        el.dispatchEvent(new Event('load')); // Trigger load event if already loaded
+                    }
+                }
+                else {
+                    setTimeout(() => {
+                        el.classList.add('fade-in');
+                    }, delay);
+                }
             }
         });
         delay += increment;
