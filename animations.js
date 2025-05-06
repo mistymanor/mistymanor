@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Animate elements with a delay
     let delay = 0;
-    const increment = 300; // milliseconds between animations
+    const increment = 150; // milliseconds between animations
     
     animatedElements.forEach(selector => {
         const elements = document.querySelectorAll(selector);
