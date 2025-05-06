@@ -33,6 +33,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: URL Rewrite (directory-style)
+        run: |
+          find . -maxdepth 1 -name "*.html" ! -name "index.html" | while read file; do
+            base=$(basename "$file" .html)
+            mkdir -p "$base"
+            mv "$file" "$base/index.html"
+          done
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
