@@ -33,6 +33,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadScript(src) {
         return new Promise((resolve, reject) => {
+            // Ensure the script is not already loaded
+            if (document.querySelector(`script[src="${src}"]`)) {
+                resolve(src + ' already loaded');
+                return;
+            }
+
             const s = document.createElement('script');
             s.src = src;
             s.onload = () => resolve(src + ' loaded');
