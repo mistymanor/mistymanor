@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             s.src = src;
             s.onload = () => resolve(src + ' loaded');
             s.onerror = () => reject(new Error(src + ' failed to load'));
-            document.head.appendChild(s);
+            document.body.appendChild(s);
         });
     }
 
