@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+(function () {
     console.log("DOM fully loaded");
     // Directly select the mobile menu elements
     const hamburgerMenu = document.querySelector('.hamburger-menu');
@@ -111,4 +111,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-});
+})();
