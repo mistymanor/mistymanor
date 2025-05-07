@@ -32,15 +32,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadScript(src) {
-        const s = document.createElement('script');
-        s.src = src;
-        s.defer = true;
-        document.body.appendChild(s);
-        s.onload = function() {
-            console.log(`Script loaded: ${src}`);
-        };
-        s.onerror = function() {
-            console.error(`Error loading script: ${src}`);
-        };
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = () => resolve(src + ' loaded');
+            s.onerror = () => reject(new Error(src + ' failed to load'));
+            document.head.appendChild(s);
+        });
     }
+
+    window.addEventListener('load', () => {
+        console.log('Window fully loaded (including images). Waiting 1s before injecting scripts...');
+        
+        // Wait a second to ensure rendering is stable
+        setTimeout(async () => {
+          try {
+            const anim = await loadScript('animations.js');
+            console.log(anim);
+            const main = await loadScript('script.js');
+            console.log(main);
+          } catch (err) {
+            console.error('Script loading failed:', err);
+          }
+        }, 1000); // Adjust this delay if needed (in ms)
+    });
 });
