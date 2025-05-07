@@ -58,7 +58,9 @@
         '.mobile-nav-container',
         '.mobile-nav-header',
         '.close-btn',
-        '*[data-no-fade="true"]'  // Any element with data-no-fade="true" will be excluded
+        '*[data-no-fade="true"]',  // Any element with data-no-fade="true" will be excluded
+        'footer',
+        'footer *'
     ];
 
     // Configuration for the focus effect (only applies to content elements)
