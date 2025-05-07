@@ -29,13 +29,15 @@
         '.feature-box p',
         '.feature-box h3',
         '.feature-box img'
+        // Footer elements are explicitly excluded - they are handled as background elements
     ];
     
     // Background elements - these will be visible immediately and stay fully visible
     // Structural containers, backgrounds, and layout elements
     const backgroundElements = [
         'header',
-        'footer',
+        'footer', 'footer *', // Footer and all its children
+        '.footer-content', '.footer-content *', // Footer content and all its children
         '.hero',
         '.container',
         '.wrapper',
@@ -88,6 +90,11 @@
     
     // Helper function to determine if an element is a background element
     function isBackgroundElement(element) {
+        // Special case for footer - always treat the footer and all its descendants as background elements
+        if (element.tagName.toLowerCase() === 'footer' || element.closest('footer')) {
+            return true;
+        }
+        
         return backgroundElements.some(bgSelector => 
             element.matches(bgSelector)
         );
@@ -113,6 +120,23 @@
                 // Make background elements visible immediately with full opacity
                 el.style.opacity = '1';
                 el.style.transform = 'translateY(0)';
+                
+                // Mark element as a background element to prevent it from being animated
+                el.dataset.background = 'true';
+                
+                // Special handling for footer elements to ensure they're always visible
+                if (el.tagName.toLowerCase() === 'footer' || el.closest('footer')) {
+                    el.style.opacity = '1 !important';
+                    el.classList.remove('animated-element');
+                    
+                    // Also ensure all children of footer have full opacity
+                    const footerChildren = el.querySelectorAll('*');
+                    footerChildren.forEach(child => {
+                        child.style.opacity = '1';
+                        child.classList.remove('animated-element');
+                        child.dataset.background = 'true';
+                    });
+                }
             }
         });
     });
@@ -121,14 +145,28 @@
     contentElements.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(el => {
-            // Skip elements that match excluded selectors or are descendants of background elements
-            if (!shouldExcludeElement(el) && !isBackgroundElement(el)) {
+            // Skip elements that match excluded selectors, are descendants of background elements,
+            // or are part of the footer
+            if (!shouldExcludeElement(el) && !isBackgroundElement(el) && !el.closest('footer')) {
                 el.classList.add('animated-element');
                 // Add transition for smooth opacity changes
                 el.style.transition = `opacity 0.6s ease-out, transform 0.6s ease-out, opacity ${focusConfig.transitionSpeed}s ease-out`;
                 elementsToAnimate.push(el);
             }
         });
+    });
+    
+    // Special handling for footer - ensure it's always fully visible
+    const footerElements = document.querySelectorAll('footer, footer *');
+    footerElements.forEach(el => {
+        // Remove any animation classes
+        el.classList.remove('animated-element');
+        // Set to full opacity
+        el.style.opacity = '1';
+        // Mark as background
+        el.dataset.background = 'true';
+        // Remove from observer if it was added
+        observer.unobserve(el);
     });
     
     // ========================================================
