@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('Animations JS loaded and DOM ready!');
     const animatedElements = [
       'header',
       '.hero',
