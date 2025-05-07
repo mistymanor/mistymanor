@@ -417,8 +417,8 @@ footer p {
 }
 
 .fade-in {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1 !important;
+    transform: translateY(0) !important;
 }
 
 /* Contact Page Styles */
