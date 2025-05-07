@@ -27,6 +27,14 @@
         '.mobile-nav-header',
         '.close-btn'
     ];
+
+    // Configuration for the focus effect
+    const focusConfig = {
+        minOpacity: 0.6,      // Minimum opacity for elements at the edge of the viewport
+        maxOpacity: 1.0,      // Maximum opacity for elements at the center of the viewport
+        transitionSpeed: 0.2, // Speed of opacity transitions in seconds
+        enabled: true         // Toggle to enable/disable the focus effect
+    };
     
     // Helper function to determine if an element should be excluded
     function shouldExcludeElement(element) {
@@ -43,6 +51,8 @@
             // Skip elements that match the excluded selectors
             if (!shouldExcludeElement(el)) {
                 el.classList.add('animated-element');
+                // Add transition for smooth opacity changes
+                el.style.transition = `opacity 0.6s ease-out, transform 0.6s ease-out, opacity ${focusConfig.transitionSpeed}s ease-out`;
                 elementsToAnimate.push(el);
             }
         });
@@ -61,16 +71,76 @@
             // Add the fade-in class when the element enters the viewport
             if (entry.isIntersecting) {
                 entry.target.classList.add('fade-in');
+                // Mark this element as visible for the focus effect
+                entry.target.dataset.visible = 'true';
             } else {
                 // Remove the fade-in class when the element exits the viewport
                 // This allows the animation to occur again when scrolled back into view
                 entry.target.classList.remove('fade-in');
+                // Mark as not visible and reset opacity
+                entry.target.dataset.visible = 'false';
+                entry.target.style.opacity = '';
             }
         });
     };
     
     // Create the observer instance
     const observer = new IntersectionObserver(handleIntersection, observerOptions);
+    
+    // Calculate how centered an element is in the viewport
+    // Returns a value between 0 (edge of viewport) and 1 (center of viewport)
+    function calculateViewportCenterFactor(element) {
+        const rect = element.getBoundingClientRect();
+        const elementCenter = rect.top + (rect.height / 2);
+        const viewportHeight = window.innerHeight;
+        const viewportCenter = viewportHeight / 2;
+        
+        // Calculate distance from center (normalized to 0-1)
+        const distanceFromCenter = Math.abs(elementCenter - viewportCenter);
+        const maxDistance = viewportHeight / 2;
+        
+        // Convert to a factor where 1 is center and 0 is edge
+        return 1 - Math.min(distanceFromCenter / maxDistance, 1);
+    }
+    
+    // Update opacity based on element position in viewport
+    function updateElementOpacity(element) {
+        if (element.dataset.visible !== 'true') return;
+        
+        const centerFactor = calculateViewportCenterFactor(element);
+        
+        // Calculate opacity based on center factor
+        const opacity = focusConfig.minOpacity + 
+            ((focusConfig.maxOpacity - focusConfig.minOpacity) * centerFactor);
+        
+        // Apply opacity
+        element.style.opacity = opacity;
+    }
+    
+    // Update all visible elements' opacities
+    function updateAllElementOpacities() {
+        if (!focusConfig.enabled) return;
+        
+        elementsToAnimate.forEach(element => {
+            if (element.dataset.visible === 'true') {
+                updateElementOpacity(element);
+            }
+        });
+    }
+    
+    // Use requestAnimationFrame for smooth animations during scroll
+    let ticking = false;
+    
+    // Add scroll listener to update opacities
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                updateAllElementOpacities();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
     
     // Special case - handle initial above-the-fold content differently
     // Elements already visible when the page loads should animate immediately
@@ -86,12 +156,17 @@
                 // Add a small delay for a nicer initial loading effect
                 setTimeout(() => {
                     element.classList.add('fade-in');
+                    element.dataset.visible = 'true';
+                    updateElementOpacity(element);
                 }, 100);
             }
             
             // Observe the element for future scroll interactions
             observer.observe(element);
         });
+        
+        // Initial update of opacities
+        updateAllElementOpacities();
     };
     
     // Handle elements already in view on page load
@@ -100,6 +175,17 @@
     } else {
         window.addEventListener('load', handleInitialVisibility);
     }
+    
+    // Update opacities on window resize
+    window.addEventListener('resize', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                updateAllElementOpacities();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
     
     // Performance optimization: Disconnect observer when all animations have played once
     let allAnimated = false;
@@ -122,9 +208,10 @@
             if (notAnimated.length === 0) {
                 // All elements have been animated at least once
                 allAnimated = true;
-                // We can disconnect the observer to save resources
-                // But since we want elements to re-animate when scrolling back up,
-                // we'll keep it connected
+                // We could disconnect the observer here, but since we want 
+                // elements to re-animate when scrolling back up and to 
+                // continue updating opacity based on viewport position,
+                // we'll keep everything connected
             }
         }
     }, { passive: true }); // Use passive listener for performance
