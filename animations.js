@@ -1,34 +1,67 @@
 (function() {
-    // Elements to animate when they enter the viewport
-    const animatedElements = [
-        'header',
-        '.hero',
+    // ========================================================
+    // ELEMENT SELECTION CONFIGURATION
+    // ========================================================
+    
+    // Content elements - these will have fade-in and variable opacity effects
+    // Text, images, buttons, and other focal content
+    const contentElements = [
         '.main-content h1',
+        '.main-content h2',
+        '.main-content h3',
         '.main-content p',
+        '.main-content li',
+        '.main-content img',
+        '.hero-text',
         '.contact-info',
-        '.buttons',
+        '.buttons a',
+        '.btn',
+        '.card-content',
+        '.feature-text',
+        '.testimonial-text',
+        '.gallery-item img',
+        '.service-description',
+        'article p',
+        'article h1',
+        'article h2',
+        'article h3',
+        'article img',
+        '.feature-box p',
+        '.feature-box h3',
+        '.feature-box img'
+    ];
+    
+    // Background elements - these will be visible immediately and stay fully visible
+    // Structural containers, backgrounds, and layout elements
+    const backgroundElements = [
+        'header',
         'footer',
-        // Add any other elements you want to animate
+        '.hero',
+        '.container',
+        '.wrapper',
+        '.section-wrapper',
+        '.background',
+        'section',
+        'article',
+        '.feature-box',
         '.about-section',
         '.services-section',
         '.testimonials',
-        '.gallery-item',
-        'section',
-        'article',
-        '.feature-box'
+        '.gallery-item'
     ];
     
-    // Elements to exclude from animations
+    // Elements to completely exclude from any animations
     const excludedElements = [
         '.hamburger-menu',
         '.mobile-nav',
         '.mobile-menu',
         '.mobile-nav-container',
         '.mobile-nav-header',
-        '.close-btn'
+        '.close-btn',
+        '*[data-no-fade="true"]'  // Any element with data-no-fade="true" will be excluded
     ];
 
-    // Configuration for the focus effect
+    // Configuration for the focus effect (only applies to content elements)
     const focusConfig = {
         minOpacity: 0.6,      // Minimum opacity for elements at the edge of the viewport
         maxOpacity: 1.0,      // Maximum opacity for elements at the center of the viewport
@@ -36,20 +69,60 @@
         enabled: true         // Toggle to enable/disable the focus effect
     };
     
-    // Helper function to determine if an element should be excluded
+    // ========================================================
+    // HELPER FUNCTIONS
+    // ========================================================
+    
+    // Helper function to determine if an element should be completely excluded
     function shouldExcludeElement(element) {
+        // Check if the element or any of its ancestors have data-no-fade="true"
+        if (element.closest('[data-no-fade="true"]')) {
+            return true;
+        }
+        
+        // Check if element matches any excluded selectors
         return excludedElements.some(excludedSelector => 
             element.matches(excludedSelector) || element.querySelector(excludedSelector)
         );
     }
     
-    // Set initial state for all elements (invisible)
-    const elementsToAnimate = [];
-    animatedElements.forEach(selector => {
+    // Helper function to determine if an element is a background element
+    function isBackgroundElement(element) {
+        return backgroundElements.some(bgSelector => 
+            element.matches(bgSelector)
+        );
+    }
+    
+    // ========================================================
+    // INITIALIZE ELEMENTS
+    // ========================================================
+    
+    // Arrays to store elements for animation
+    const elementsToAnimate = []; // Content elements with fade-in and variable opacity
+    const immediateElements = []; // Background elements that become visible immediately
+    
+    // Initialize background elements (visible immediately, always full opacity)
+    backgroundElements.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(el => {
             // Skip elements that match the excluded selectors
             if (!shouldExcludeElement(el)) {
+                // Add to immediate elements array
+                immediateElements.push(el);
+                
+                // Make background elements visible immediately with full opacity
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    // Initialize content elements (fade in with variable opacity)
+    contentElements.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            // Skip elements that match excluded selectors or are descendants of background elements
+            if (!shouldExcludeElement(el) && !isBackgroundElement(el)) {
                 el.classList.add('animated-element');
                 // Add transition for smooth opacity changes
                 el.style.transition = `opacity 0.6s ease-out, transform 0.6s ease-out, opacity ${focusConfig.transitionSpeed}s ease-out`;
@@ -57,6 +130,10 @@
             }
         });
     });
+    
+    // ========================================================
+    // INTERSECTION OBSERVER SETUP
+    // ========================================================
     
     // Create intersection observer to detect when elements enter/exit the viewport
     const observerOptions = {
@@ -142,13 +219,24 @@
         }
     }, { passive: true });
     
+    // ========================================================
+    // INITIAL VISIBILITY HANDLING
+    // ========================================================
+    
     // Special case - handle initial above-the-fold content differently
     // Elements already visible when the page loads should animate immediately
     const handleInitialVisibility = () => {
         // Get viewport height
         const viewportHeight = window.innerHeight;
         
-        // Apply immediate animation to elements that are initially visible
+        // Background elements are made visible immediately
+        immediateElements.forEach(element => {
+            // No animation, just ensure it's visible
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+        });
+        
+        // Content elements that are initially visible animate with a short delay
         elementsToAnimate.forEach(element => {
             const rect = element.getBoundingClientRect();
             // If element is in the initial viewport, animate immediately
