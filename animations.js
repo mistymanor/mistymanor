@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
         '.contact-info',
         '.buttons',
         'footer',
-        'img'
     ];
     
     // Elements to exclude from animations
@@ -41,29 +40,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Animate elements with a delay
     let delay = 0;
-    const increment = 150; // milliseconds between animations
+    const increment = 200; // milliseconds between animations
     
     animatedElements.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(el => {
             // Skip elements that match the excluded selectors
             if (!shouldExcludeElement(el)) {
-                if (el.tagName === 'IMG') {
-                    el.addEventListener('load', () => {
-                        setTimeout(() => {
-                            el.classList.add('fade-in');
-                        }, delay);
-                    });
-
-                    if (el.complete) {
-                        el.dispatchEvent(new Event('load')); // Trigger load event if already loaded
-                    }
-                }
-                else {
-                    setTimeout(() => {
-                        el.classList.add('fade-in');
-                    }, delay);
-                }
+                setTimeout(() => {
+                    el.classList.add('fade-in');
+                }, delay);
             }
         });
         delay += increment;
