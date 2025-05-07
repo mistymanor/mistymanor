@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+(function initAnimations() {
     console.log('Animations JS loaded and DOM ready!');
     const animatedElements = [
       'header',
@@ -61,5 +61,5 @@ document.addEventListener('DOMContentLoaded', function () {
         element.matches(excludedSelector) || element.querySelector(excludedSelector)
       );
     }
-  });
+  }) ();
   
