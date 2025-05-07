@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function reveal() {
     document.body.style.visibility = 'visible';
-    inject('./animations.js');
-    inject('./script.js');
+    inject('/animations.js');
+    inject('/script.js');
   }
   
   function inject(src) {
