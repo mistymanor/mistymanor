@@ -10,6 +10,91 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" href="/images/MMIcon.png" type="image/png">
     <script src="/preload.js"></script>
+    <style>
+        /* Additional styles for the map and directions */
+        .transport-buttons {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .transport-mode {
+            padding: 8px 15px;
+            background-color: #f7f7f7;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+        
+        .transport-mode svg {
+            margin-right: 5px;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .transport-mode.active {
+            background-color: #3a5f8f;
+            color: white;
+            border-color: #3a5f8f;
+        }
+        
+        .route-summary {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        #directions-panel {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        #directions-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #directions-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        #directions-panel::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        #location-status {
+            font-size: 14px;
+            font-style: italic;
+            text-align: center;
+            margin-bottom: 10px;
+            min-height: 20px;
+            color: #3a5f8f;
+        }
+        
+        .adp-directions {
+            color: white;
+        }
+        
+        .adp-placemark, .adp-summary, .adp-legal {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .adp-text {
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Header Section -->
@@ -88,44 +173,8 @@
         <div class="container">
             <div class="contact-container">
                 <div class="map-container">
-                    <!--
-                    Explain what I did here:
-                    https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d24699.90683358789!2d-76.9771348087402!3d39.32894037950611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c826f33da8ffff%3A0xe4d175a0f5f34f5!2s7621%20Ridge%20Rd%2C%20Marriottsville%2C%20MD%2021104!5e0!3m2!1sen!2sus!4v1617754321000!5s
-
-                    each piece:
-                    1. !1m18 - This indicates the start of a new map.
-                    2. !1m12 - This indicates the start of a new map with a specific location.
-                    3. !1m3 - This indicates the start of a new map with a specific location and zoom level.
-                    4. !1d24699.90683358789 - This is the zoom level of the map.
-                    5. !2d-76.9771348087402 - This is the longitude of the location.
-                    6. !3d39.32894037950611 - This is the latitude of the location.
-                    7. !2m3 - This indicates the start of a new map with a specific location and zoom level.
-                    8. !1f0 - This indicates the start of a new map with a specific location and zoom level.
-                    9. !2f0 - This indicates the start of a new map with a specific location and zoom level.
-                    10. !3f0 - This indicates the start of a new map with a specific location and zoom level.
-                    11. !3m2 - This indicates the start of a new map with a specific location and zoom level.
-                    12. !1i1024 - This indicates the width of the map.
-                    13. !2i768 - This indicates the height of the map.
-                    14. !4f13.1 - This indicates the start of a new map with a specific location and zoom level.
-                    15. !3m3 - This indicates the start of a new map with a specific location and zoom level.
-                    16. !1m2 - This indicates the start of a new map with a specific location and zoom level.
-                    17. !1s0x89c826f33da8ffff%3A0xe4d175a0f5f34f5 - This is the location of the map.
-                    18. !2s7621%20Ridge%20Rd%2C%20Marriottsville%2C%20MD%2021104 - This is the address of the location.
-                    19. !5e0 - This indicates the start of a new map with a specific location and zoom level.
-                    20. !3m2 - This indicates the start of a new map with a specific location and zoom level.
-                    21. !1sen - This indicates the start of a new map with a specific location and zoom level.
-                    22. !2sus - This indicates the start of a new map with a specific location and zoom level.
-                    23. !4v1617754321000 - This indicates the start of a new map with a specific location and zoom level.
-                    24. !5s - This indicates the start of a new map with a specific location and zoom level.
-                    -->
-                    <iframe 
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d24699.90683358789!2d-76.9771348087402!3d39.32894037950611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c826f33da8ffff%3A0xe4d175a0f5f34f5!2s7621%20Ridge%20Rd%2C%20Marriottsville%2C%20MD%2021104!5e0!3m2!1sen!2sus!4v1617754321000!5s"
-                        width="100%" 
-                        height="100%"
-                        style="border:0; filter: grayscale(100%) contrast(0.8) brightness(1.1);"
-                        allowfullscreen="" 
-                        loading="lazy">
-                    </iframe>
+                    <!-- Dynamic map container that will be populated by JavaScript -->
+                    <div id="map" style="width: 100%; height: 100%; border-radius: 8px;"></div>
                 </div>
                 <div class="contact-info-container" style="border: 1px solid white; border-radius: 5px; background: transparent; padding: 15px;">
                     <pre style="font-family: 'Poppins', sans-serif; font-size: 16px; white-space: pre-line; margin: 0; padding: 0; color: white;"><b>7621 Ridge Road
@@ -137,9 +186,62 @@ Tuesday: Closed
 
 Wednesday - Sunday: 9am - 7pm</pre>
                 </div>
+                <!-- New directions widget -->
+                <div class="contact-info-container" style="border: 1px solid white; border-radius: 5px; background: transparent; padding: 15px; margin-top: 30px;">
+                    <div id="location-status"></div>
+                    
+                    <div id="general-directions">
+                        <h3>Getting to Misty Manor</h3>
+                        <p>Enable location services to see personalized directions to our facility.</p>
+                    </div>
+                    
+                    <div class="transport-buttons">
+                        <button id="transport-driving" class="transport-mode active" data-mode="DRIVING">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+                            Driving
+                        </button>
+                        <button id="transport-transit" class="transport-mode" data-mode="TRANSIT">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-11-6H18V6H5.5v5z"/></svg>
+                            Transit
+                        </button>
+                        <button id="transport-walking" class="transport-mode" data-mode="WALKING">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg>
+                            Walking
+                        </button>
+                        <button id="transport-bicycling" class="transport-mode" data-mode="BICYCLING">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM5 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 8.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5zm5.8-10l2.4-2.9.7.7-1.7 1.7h5.8l-1.2 3.5-1.9 1.3-1.3 3.4h-1.9l1.3-3.7-2.9-1.5-1.3 1.3-1.1-1.1 2.3-2.3-2.9-2.9.7-.7 2.9 2.9zm7.2 3.5c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 8.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z"/></svg>
+                            Bicycling
+                        </button>
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <h3>Route Information</h3>
+                    <div id="route-details">
+                        <p>Select your starting point and transportation mode to get directions.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="directions-panel"></div>
+            <div id="general-directions">
+                <h3>Finding Your Way to Misty Manor</h3>
+                <p>Misty Manor Riding School is located at 123 Equestrian Way, nestled in the scenic countryside just outside of town.</p>
+                <p>From Highway 101:</p>
+                <ul>
+                    <li>Take exit 25 for County Road</li>
+                    <li>Turn right onto Valley Road</li>
+                    <li>Continue for 2.5 miles</li>
+                    <li>Turn left onto Equestrian Way</li>
+                    <li>The riding school entrance will be on your right after 0.5 miles</li>
+                </ul>
+                <p>Our facility features ample parking for both cars and horse trailers.</p>
             </div>
         </div>
     </section>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyACz3vS-NSp_Zq2Z1IHzdt09SgS4XS4-l0&libraries=places" defer></script>
+    <script src="map.js" defer></script>
 
     <!-- Footer Section -->
     <footer>
