@@ -5,7 +5,7 @@
 
 // Configuration
 const MISTY_MANOR_ADDRESS = "7621 Ridge Rd, Marriottsville, MD 21104";
-const MISTY_MANOR_COORDINATES = { lat: 39.32894037950611, lng: -76.9771348087402 };
+const MISTY_MANOR_COORDINATES = { lat: 39.364420, lng: -76.896384 };
 const DEFAULT_ZOOM = 13;
 const DEFAULT_MAP_OPTIONS = {
     zoom: DEFAULT_ZOOM,
@@ -406,23 +406,14 @@ function handleLocationError(error) {
     document.getElementById('general-directions').innerHTML = `
         <h3>Finding Your Way to Misty Manor</h3>
         <p>Misty Manor Riding School is located at 7621 Ridge Road, Marriottsville, MD 21104, nestled in the scenic countryside just outside of Baltimore.</p>
-        <p>From Baltimore:</p>
+        <p>From I-70:</p>
         <ul>
             <li>Take I-70 West towards Frederick</li>
-            <li>Take exit 83 for MD-32 South</li>
-            <li>Continue for approximately 2 miles</li>
-            <li>Turn right onto Ridge Road</li>
-            <li>Misty Manor will be on your left after 1.5 miles</li>
+            <li>Take exit 83 onto Marriotsville Rd</li>
+            <li>Keep right for Marriotsville Rd N, then, in 3.7 miles, turn left onto Ridge Rd</li>
+            <li>After about a mile, turn right still on Ridge Road</li>
+            <li>Misty Manor will be on your left after 0.3 miles!</li>
         </ul>
-        <p>From Washington DC:</p>
-        <ul>
-            <li>Take I-495 North to I-95 North</li>
-            <li>Take exit 38 for MD-32 West towards Columbia</li>
-            <li>Continue for approximately 15 miles</li>
-            <li>Turn right onto Ridge Road</li>
-            <li>Misty Manor will be on your left after 1.5 miles</li>
-        </ul>
-        <p>Our facility features ample parking for both cars and horse trailers.</p>
     `;
     
     // Hide the route details section
