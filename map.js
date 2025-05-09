@@ -432,20 +432,22 @@ function handleLocationError(error) {
         '<p>Enable location services to see personalized directions.</p>';
 }
 
-/**
- * Initialize the map when the page loads
- */
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the map when Google Maps API is loaded
-    if (typeof google !== 'undefined') {
-        initMap();
-    } else {
-        // Fallback if Google Maps API fails to load
-        console.error("Google Maps API did not load properly");
-        document.getElementById('map').innerHTML = 
-            '<div style="text-align:center;padding:50px;"><p>Map could not be loaded. Please refresh the page or try again later.</p></div>';
+// The DOMContentLoaded event listener is removed because the Google Maps API will call initMap directly
+// when it finishes loading via the callback parameter
+
+// Handle map loading errors
+function handleMapLoadError() {
+    console.error("Google Maps API did not load properly");
+    document.getElementById('map').innerHTML = 
+        '<div style="text-align:center;padding:50px;"><p>Map could not be loaded. Please refresh the page or try again later.</p></div>';
+}
+
+// Set a timeout to check if the map loaded
+setTimeout(function() {
+    if (typeof google === 'undefined') {
+        handleMapLoadError();
     }
-});
+}, 10000); // Check after 10 seconds
 
 // Handle cleanup when the page is unloaded
 window.addEventListener('beforeunload', function() {
