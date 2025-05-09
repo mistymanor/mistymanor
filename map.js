@@ -58,15 +58,19 @@ function initMap() {
     // Create the map instance
     map = new google.maps.Map(document.getElementById("map"), DEFAULT_MAP_OPTIONS);
     
-    // Create a marker for Misty Manor
-    destinationMarker = new google.maps.Marker({
+    // Create a marker for Misty Manor using AdvancedMarkerElement
+    const markerContent = document.createElement('div');
+    markerContent.innerHTML = `
+        <div class="map-marker" title="Misty Manor Equestrian Center">
+            <img src="https://maps.google.com/mapfiles/ms/icons/red-dot.png" alt="Misty Manor">
+        </div>
+    `;
+    
+    destinationMarker = new google.maps.marker.AdvancedMarkerElement({
         position: MISTY_MANOR_COORDINATES,
         map: map,
         title: "Misty Manor Equestrian Center",
-        animation: google.maps.Animation.DROP,
-        icon: {
-            url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-        }
+        content: markerContent
     });
     
     // Add info window for the destination marker
@@ -207,14 +211,19 @@ function startLocationTracking() {
  * Add marker for user's location
  */
 function addUserMarker(location) {
-    userMarker = new google.maps.Marker({
+    // Create user marker with AdvancedMarkerElement
+    const userMarkerContent = document.createElement('div');
+    userMarkerContent.innerHTML = `
+        <div class="map-marker" title="Your Location">
+            <img src="https://maps.google.com/mapfiles/ms/icons/blue-dot.png" alt="Your Location">
+        </div>
+    `;
+    
+    userMarker = new google.maps.marker.AdvancedMarkerElement({
         position: location,
         map: map,
         title: "Your Location",
-        animation: google.maps.Animation.DROP,
-        icon: {
-            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-        }
+        content: userMarkerContent
     });
     
     // Fit map to include both markers
@@ -283,7 +292,7 @@ function calculateAndDisplayRoute(travelMode) {
                 lastDistance = distanceInMiles;
                 
                 // Display travel time and distance
-                document.getElementById("route-info").innerHTML = `
+                document.getElementById("route-details").innerHTML = `
                     <div class="route-summary">
                         <p><strong>Distance:</strong> ${leg.distance.text}</p>
                         <p><strong>Estimated travel time:</strong> ${leg.duration.text}</p>
