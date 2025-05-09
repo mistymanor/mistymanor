@@ -7,39 +7,6 @@
 const MISTY_MANOR_ADDRESS = "7621 Ridge Rd, Marriottsville, MD 21104";
 const MISTY_MANOR_COORDINATES = { lat: 39.364420, lng: -76.896384 };
 const DEFAULT_ZOOM = 13;
-const DEFAULT_MAP_OPTIONS = {
-    zoom: DEFAULT_ZOOM,
-    center: MISTY_MANOR_COORDINATES,
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
-    },
-    scaleControl: true,
-    streetViewControl: true,
-    fullscreenControl: true,
-    styles: [
-        {
-            "featureType": "all",
-            "elementType": "geometry.fill",
-            "stylers": [{"weight": "2.00"}]
-        },
-        {
-            "featureType": "landscape",
-            "elementType": "all",
-            "stylers": [{"color": "#f2f2f2"}]
-        },
-        {
-            "featureType": "poi",
-            "elementType": "all",
-            "stylers": [{"visibility": "off"}]
-        },
-        {
-            "featureType": "road",
-            "elementType": "all",
-            "stylers": [{"saturation": -100}, {"lightness": 45}]
-        }
-    ]
-};
 
 // Global variables
 let map;
@@ -55,8 +22,43 @@ let lastDistance;
  * Initialize the map when the page loads
  */
 function initMap() {
+    // Define map options now that Google API is loaded
+    const mapOptions = {
+        zoom: DEFAULT_ZOOM,
+        center: MISTY_MANOR_COORDINATES,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+        },
+        scaleControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        styles: [
+            {
+                "featureType": "all",
+                "elementType": "geometry.fill",
+                "stylers": [{"weight": "2.00"}]
+            },
+            {
+                "featureType": "landscape",
+                "elementType": "all",
+                "stylers": [{"color": "#f2f2f2"}]
+            },
+            {
+                "featureType": "poi",
+                "elementType": "all",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "road",
+                "elementType": "all",
+                "stylers": [{"saturation": -100}, {"lightness": 45}]
+            }
+        ]
+    };
+
     // Create the map instance
-    map = new google.maps.Map(document.getElementById("map"), DEFAULT_MAP_OPTIONS);
+    map = new google.maps.Map(document.getElementById("map"), mapOptions);
     
     // Create a marker for Misty Manor using AdvancedMarkerElement
     const markerContent = document.createElement('div');
