@@ -16,6 +16,11 @@ function loadGoogleMapsAPI() {
     }
 
     return new Promise((resolve, reject) => {
+        const customCallback = function() {
+            // This callback will be called when Google Maps API is loaded
+            resolve();
+        };
+
         (g => {
             var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
             b = b[c] || (b[c] = {});
@@ -31,7 +36,18 @@ function loadGoogleMapsAPI() {
                 m.head.append(a);
             }));
             d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
-        })({ key: apiKey, v: "weekly", callback: resolve });
+        })({ key: apiKey, v: "weekly" });
+        
+        // Connect the internal Promise to our outer Promise
+        window.google && window.google.maps ? resolve() : 
+            window.initGoogleMapsCallback = customCallback;
+
+        // Set global callback that Google can call
+        window[q = 'initGoogleMapsCallback'] = function() {
+            resolve();
+            delete window[q];
+        };
+        
         // Reject after a timeout in case the network fails
         setTimeout(() => reject(new Error("Google Maps timed-out")), 10000);
     });
