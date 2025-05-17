@@ -166,6 +166,11 @@ function initMap() {
                     </svg>
                     Get Route Info
                 `;
+                
+                // Hide transport buttons when directions are hidden
+                document.querySelectorAll('.transport-mode-btn').forEach(btn => {
+                    btn.style.display = 'none'; // Ensure they're hidden
+                });
             } else {
                 // Show directions
                 container.classList.add('directions-visible');
@@ -177,6 +182,9 @@ function initMap() {
                     </svg>
                     Hide Route Info
                 `;
+                
+                // Show appropriate transport buttons when directions are shown
+                updateTransportVisibility();
                 
                 // Make sure route information is calculated and up-to-date
                 const activeMode = document.querySelector('.transport-mode.active:not(#show-directions)');
@@ -217,11 +225,16 @@ function getUserLocation() {
                 // Add marker for user's location
                 addUserMarker(userLocation);
                 
-                // Show the Get Route Info button
+                // Show ONLY the Get Route Info button and ensure transport buttons remain hidden
                 const showDirectionsBtn = document.getElementById('show-directions');
                 if (showDirectionsBtn) {
                     showDirectionsBtn.style.display = 'inline-block';
                 }
+                
+                // Explicitly ensure transport mode buttons remain hidden until the Get Route Info button is clicked
+                document.querySelectorAll('.transport-mode-btn').forEach(btn => {
+                    btn.style.display = 'none'; // Override any other styling
+                });
                 
                 // Calculate and display the route but don't show it yet
                 calculateAndDisplayRoute('DRIVING', false); // Default to driving
@@ -523,9 +536,33 @@ function updateTransportOptions(distanceInMiles) {
         }
     }
     
-    // Note: The initial visibility is controlled by .transport-mode-btn class
-    // When directions are visible, .directions-visible .transport-mode-btn shows the buttons
-    // The .hidden-option class will override this for specific buttons based on distance
+    // Update the visibility of transport buttons
+    updateTransportVisibility();
+}
+
+/**
+ * Update transport mode buttons visibility based on active directions and distance
+ */
+function updateTransportVisibility() {
+    const container = document.querySelector('.contact-container').parentNode;
+    const isDirectionsVisible = container.classList.contains('directions-visible');
+    
+    // Get all transport mode buttons
+    const transportButtons = document.querySelectorAll('.transport-mode-btn');
+    
+    // Set initial visibility based on directions panel visibility
+    transportButtons.forEach(btn => {
+        if (isDirectionsVisible && !btn.classList.contains('hidden-option')) {
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    });
+    
+    // Note: The visibility logic works as follows:
+    // 1. All transport buttons are hidden by default (.transport-mode-btn or style="display: none")
+    // 2. When directions are visible AND the button is not hidden by distance (.hidden-option), 
+    //    then the button is shown with display: inline-block
 }
 
 /**
