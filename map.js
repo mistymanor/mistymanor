@@ -41,6 +41,9 @@ function initMap() {
     // Create the map instance
     map = new google.maps.Map(document.getElementById("map"), mapOptions);
     
+    // Ensure map is properly sized for mobile devices
+    ensureMapIsVisible();
+    
     // Create a marker for Misty Manor using createMarker helper function
     const markerContent = document.createElement('div');
     markerContent.innerHTML = `
@@ -85,6 +88,14 @@ function initMap() {
             strokeOpacity: 0.7
         }
     });
+    
+    // Explicitly make sure no styles property is set after initialization
+    if (directionsRenderer.setOptions) {
+        directionsRenderer.setOptions({
+            styles: null,
+            mapTypeId: null
+        });
+    }
     
     // Add directions panel
     directionsRenderer.setPanel(document.getElementById("directions-panel"));
@@ -445,8 +456,8 @@ function createMarker(options) {
             position: options.position,
             map: options.map,
             title: options.title,
-            content: options.content,
-            mapId: options.map.mapId // Ensure Map ID is passed to the marker
+            content: options.content
+            // Note: Don't pass mapId to the marker itself, it inherits from the map
         });
     } else {
         // Fall back to regular Marker
@@ -479,6 +490,68 @@ setTimeout(function() {
         handleMapLoadError();
     }
 }, 10000); // Check after 10 seconds
+
+/**
+ * Ensure the map is visible and properly sized, especially on mobile devices
+ */
+function ensureMapIsVisible() {
+    if (!map) return;
+    
+    // Force the map to be visible
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        // Ensure the map container has explicit dimensions
+        mapElement.style.width = '100%';
+        mapElement.style.height = '350px'; // Explicit height for mobile
+        mapElement.style.display = 'block';
+        
+        // Trigger a resize event on the map
+        google.maps.event.trigger(map, 'resize');
+        
+        // Re-center the map
+        if (userMarker && destinationMarker) {
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(userMarker.getPosition());
+            bounds.extend(destinationMarker.getPosition());
+            map.fitBounds(bounds);
+        } else {
+            map.setCenter(MISTY_MANOR_COORDINATES);
+        }
+    }
+}
+
+// Add event listener for window resize
+window.addEventListener('resize', function() {
+    // Use a debounce mechanism to avoid excessive calls
+    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+    this.resizeTimer = setTimeout(function() {
+        ensureMapIsVisible();
+    }, 200);
+});
+
+// Listen for orientation change events
+window.addEventListener('orientationchange', function() {
+    setTimeout(ensureMapIsVisible, 300); // Slight delay to let the browser complete the rotation
+});
+
+// Add helper function to handle menu toggling effects on the map
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    if (hamburger) {
+        hamburger.addEventListener('click', function() {
+            // When mobile menu is toggled, resize map after animation completes
+            setTimeout(ensureMapIsVisible, 400);
+        });
+    }
+    
+    const closeBtn = document.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            // When mobile menu is closed, resize map after animation completes
+            setTimeout(ensureMapIsVisible, 400);
+        });
+    }
+});
 
 // Handle cleanup when the page is unloaded
 window.addEventListener('beforeunload', function() {
