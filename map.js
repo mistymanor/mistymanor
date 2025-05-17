@@ -62,7 +62,7 @@ function initMap() {
     
     // Add info window for the destination marker
     const infoWindow = new google.maps.InfoWindow({
-        content: `<div style="width:200px; color: #000000 !important; font-family: Arial, sans-serif !important;"><strong style="color: #000000 !important;">Misty Manor Equestrian Center</strong><br><span style="color: #000000 !important;">${MISTY_MANOR_ADDRESS}</span></div>`
+        content: `<div style="width:200px; color: #000000 !important; font-family: 'Poppins', sans-serif !important;"><strong style="color: #000000 !important;">Misty Manor Equestrian Center</strong><br><span style="color: #000000 !important;">${MISTY_MANOR_ADDRESS}</span></div>`
     });
     
     // Use 'gmp-click' for AdvancedMarkerElements
@@ -238,7 +238,7 @@ function addUserMarker(location) {
     
     // Add info window for user marker
     const infoWindow = new google.maps.InfoWindow({
-        content: "<div style='width:150px; color: #000000 !important; font-family: Arial, sans-serif !important;'><strong style='color: #000000 !important;'>Your Location</strong></div>"
+        content: "<div style='width:150px; color: #000000 !important; font-family: \"Poppins\", sans-serif !important;'><strong style='color: #000000 !important;'>Your Location</strong></div>"
     });
     
     // Use 'gmp-click' for AdvancedMarkerElements
@@ -255,11 +255,52 @@ function addUserMarker(location) {
 }
 
 /**
+ * Helper function to set a marker's position that works with both marker types
+ */
+function setMarkerPosition(marker, position) {
+    if (!marker) return;
+    
+    // For AdvancedMarkerElement
+    if (marker.position !== undefined) {
+        // Create a new marker with the updated position
+        const newContent = marker.content;
+        const newTitle = marker.title;
+        const map = marker.map;
+        
+        // Remove the old marker first to prevent duplicates
+        marker.map = null;
+        
+        // Return a new marker with the updated position
+        return createMarker({
+            position: position,
+            map: map,
+            title: newTitle,
+            content: newContent
+        });
+    }
+    
+    // For regular Marker
+    if (typeof marker.setPosition === 'function') {
+        marker.setPosition(position);
+        return marker;
+    }
+    
+    return null;
+}
+
+/**
  * Update the user marker position
  */
 function updateUserMarker(location) {
     if (userMarker) {
-        userMarker.setPosition(location);
+        // Use our helper function to update the marker position
+        const updatedMarker = setMarkerPosition(userMarker, location);
+        if (updatedMarker) {
+            userMarker = updatedMarker;
+        } else {
+            // If marker update failed, create a new one
+            addUserMarker(location);
+        }
     } else {
         addUserMarker(location);
     }
