@@ -62,7 +62,7 @@ function initMap() {
     
     // Add info window for the destination marker
     const infoWindow = new google.maps.InfoWindow({
-        content: `<div style="width:200px; color: #000000;"><strong>Misty Manor Equestrian Center</strong><br>${MISTY_MANOR_ADDRESS}</div>`
+        content: `<div style="width:200px; color: #000000 !important; font-family: Arial, sans-serif !important;"><strong style="color: #000000 !important;">Misty Manor Equestrian Center</strong><br><span style="color: #000000 !important;">${MISTY_MANOR_ADDRESS}</span></div>`
     });
     
     // Use 'gmp-click' for AdvancedMarkerElements
@@ -238,7 +238,7 @@ function addUserMarker(location) {
     
     // Add info window for user marker
     const infoWindow = new google.maps.InfoWindow({
-        content: "<div style='width:150px; color: #000000;'><strong>Your Location</strong></div>"
+        content: "<div style='width:150px; color: #000000 !important; font-family: Arial, sans-serif !important;'><strong style='color: #000000 !important;'>Your Location</strong></div>"
     });
     
     // Use 'gmp-click' for AdvancedMarkerElements
@@ -492,6 +492,26 @@ setTimeout(function() {
 }, 10000); // Check after 10 seconds
 
 /**
+ * Helper function to get position from either AdvancedMarkerElement or regular Marker
+ */
+function getMarkerPosition(marker) {
+    if (!marker) return null;
+    
+    // Check if it's an AdvancedMarkerElement (has position property)
+    if (marker.position) {
+        return marker.position;
+    }
+    
+    // Check if it's a regular Marker (has getPosition method)
+    if (typeof marker.getPosition === 'function') {
+        return marker.getPosition();
+    }
+    
+    // Fallback to null if we can't determine position
+    return null;
+}
+
+/**
  * Ensure the map is visible and properly sized, especially on mobile devices
  */
 function ensureMapIsVisible() {
@@ -511,9 +531,19 @@ function ensureMapIsVisible() {
         // Re-center the map
         if (userMarker && destinationMarker) {
             const bounds = new google.maps.LatLngBounds();
-            bounds.extend(userMarker.getPosition());
-            bounds.extend(destinationMarker.getPosition());
-            map.fitBounds(bounds);
+            
+            // Get positions using the helper function that works with both marker types
+            const userPos = getMarkerPosition(userMarker);
+            const destPos = getMarkerPosition(destinationMarker);
+            
+            if (userPos) bounds.extend(userPos);
+            if (destPos) bounds.extend(destPos);
+            
+            if (bounds.isEmpty()) {
+                map.setCenter(MISTY_MANOR_COORDINATES);
+            } else {
+                map.fitBounds(bounds);
+            }
         } else {
             map.setCenter(MISTY_MANOR_COORDINATES);
         }
