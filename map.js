@@ -143,10 +143,51 @@ function initMap() {
             });
             this.classList.add('active');
             if (userLocation) {
-                calculateAndDisplayRoute(mode);
+                calculateAndDisplayRoute(mode, true);
             }
         });
     });
+    
+    // Add event listener for the "Get Route Info" button
+    const showDirectionsBtn = document.getElementById('show-directions');
+    if (showDirectionsBtn) {
+        showDirectionsBtn.addEventListener('click', function() {
+            // Toggle the visibility of the directions
+            const container = document.querySelector('.contact-container').parentNode;
+            
+            if (container.classList.contains('directions-visible')) {
+                // Hide directions
+                container.classList.remove('directions-visible');
+                this.textContent = "Get Route Info";
+                // Add the icon back
+                this.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21.71 11.29l-9-9a.996.996 0 00-1.41 0l-9 9a.996.996 0 000 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 000-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/>
+                    </svg>
+                    Get Route Info
+                `;
+            } else {
+                // Show directions
+                container.classList.add('directions-visible');
+                this.textContent = "Hide Route Info";
+                // Add the icon but with hide icon
+                this.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                    Hide Route Info
+                `;
+                
+                // Make sure route information is calculated and up-to-date
+                const activeMode = document.querySelector('.transport-mode.active:not(#show-directions)');
+                if (activeMode) {
+                    calculateAndDisplayRoute(activeMode.getAttribute('data-mode'), true);
+                } else {
+                    calculateAndDisplayRoute('DRIVING', true);
+                }
+            }
+        });
+    }
 }
 
 /**
@@ -176,8 +217,14 @@ function getUserLocation() {
                 // Add marker for user's location
                 addUserMarker(userLocation);
                 
-                // Calculate and display the route
-                calculateAndDisplayRoute('DRIVING'); // Default to driving
+                // Show the Get Route Info button
+                const showDirectionsBtn = document.getElementById('show-directions');
+                if (showDirectionsBtn) {
+                    showDirectionsBtn.style.display = 'inline-block';
+                }
+                
+                // Calculate and display the route but don't show it yet
+                calculateAndDisplayRoute('DRIVING', false); // Default to driving
                 
                 // Start watching for position changes
                 startLocationTracking();
@@ -339,8 +386,10 @@ function updateUserMarker(location) {
 
 /**
  * Calculate and display the route between user location and Misty Manor
+ * @param {string} travelMode - The travel mode (DRIVING, WALKING, BICYCLING)
+ * @param {boolean} showDirections - Whether to immediately display the directions (default: true)
  */
-function calculateAndDisplayRoute(travelMode) {
+function calculateAndDisplayRoute(travelMode, showDirections = true) {
     if (!userLocation) return;
     
     const mode = google.maps.TravelMode[travelMode];
@@ -349,7 +398,7 @@ function calculateAndDisplayRoute(travelMode) {
     document.querySelectorAll('.transport-mode').forEach(btn => {
         if (btn.getAttribute('data-mode') === travelMode) {
             btn.classList.add('active');
-        } else {
+        } else if (btn.id !== 'show-directions') {
             btn.classList.remove('active');
         }
     });
@@ -382,6 +431,15 @@ function calculateAndDisplayRoute(travelMode) {
                         <p><strong>Estimated travel time:</strong> ${leg.duration.text}</p>
                     </div>
                 `;
+                
+                // Show detailed directions if showDirections is true
+                if (showDirections) {
+                    // Add the directions-visible class to show the route info and directions panel
+                    const container = document.querySelector('.contact-container').parentNode;
+                    if (!container.classList.contains('directions-visible')) {
+                        container.classList.add('directions-visible');
+                    }
+                }
                 
                 // Show general travel recommendations based on distance
                 updateGeneralDirections(distanceInMiles);
