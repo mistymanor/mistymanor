@@ -705,3 +705,91 @@ footer p {
 #payment-processing {
     color: #333;
 }
+
+/* ==============================================
+   Google Maps and Directions Styles
+   ============================================== */
+
+/* Transport mode buttons */
+.transport-buttons {
+    margin: 15px 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.transport-mode {
+    padding: 8px 15px;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.transport-mode svg {
+    margin-right: 5px;
+    width: 16px;
+    height: 16px;
+}
+
+.transport-mode.active {
+    background-color: #3a5f8f;
+    color: white;
+    border-color: #3a5f8f;
+}
+
+.route-summary {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+
+#directions-panel {
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#directions-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#directions-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+#directions-panel::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#location-status {
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 10px;
+    min-height: 20px;
+    color: #3a5f8f;
+}
+
+.adp-directions {
+    color: white;
+}
+
+.adp-placemark, .adp-summary, .adp-legal {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.adp-text {
+    color: white;
+}
