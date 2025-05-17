@@ -6,18 +6,35 @@
 // Load the Google Maps API using the recommended loader pattern
 // Function to load the Google Maps API
 function loadGoogleMapsAPI() {
-  // Get the API key from the meta tag (injected during build)
-  const apiKeyMeta = document.querySelector('meta[name="google-maps-api-key"]');
-  const apiKey = apiKeyMeta ? apiKeyMeta.getAttribute('content') : '';
-  
-  if (!apiKey) {
-    console.error('Google Maps API key is missing. The map may not function correctly.');
-    return;
-  }
+    // Get the API key from the meta tag (injected during build)
+    const apiKeyMeta = document.querySelector('meta[name="google-maps-api-key"]');
+    const apiKey = apiKeyMeta ? apiKeyMeta.getAttribute('content') : '';
+    
+    if (!apiKey) {
+        console.error('Google Maps API key is missing. The map may not function correctly.');
+        return Promise.reject(new Error('Google Maps API key is missing.'));
+    }
 
-  // Use the Google Maps JavaScript API loader
-  (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
-  ({key: apiKey, v: "weekly"});
+    return new Promise((resolve, reject) => {
+        (g => {
+            var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+            b = b[c] || (b[c] = {});
+            var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => {
+                await (a = m.createElement("script"));
+                e.set("libraries", [...r] + "");
+                for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+                e.set("callback", c + ".maps." + q);
+                a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+                d[q] = f;
+                a.onerror = () => h = n(Error(p + " could not load."));
+                a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+                m.head.append(a);
+            }));
+            d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
+        })({ key: apiKey, v: "weekly", callback: resolve });
+        // Reject after a timeout in case the network fails
+        setTimeout(() => reject(new Error("Google Maps timed-out")), 10000);
+    });
 }
 
 // Initialize required libraries and call initMap when everything is loaded
@@ -41,15 +58,14 @@ async function initGoogleMaps() {
 }
 
 // Start loading when the document is ready
-if (document.readyState !== 'loading') {
-  loadGoogleMapsAPI();
-  initGoogleMaps();
-} else {
-  document.addEventListener('DOMContentLoaded', function() {
-    loadGoogleMapsAPI();
-    initGoogleMaps();
-  });
+function bootstrap() {
+  loadGoogleMapsAPI()          // returns a Promise
+    .then(initGoogleMaps)      // only called once the API is ready
+    .catch(handleMapLoadError);
 }
+document.readyState === "loading"
+  ? document.addEventListener("DOMContentLoaded", bootstrap)
+  : bootstrap();
 
 // Configuration
 const MISTY_MANOR_ADDRESS = "7621 Ridge Rd, Marriottsville, MD 21104";
@@ -141,10 +157,7 @@ function initMap() {
     
     // Explicitly make sure no styles property is set after initialization
     if (directionsRenderer.setOptions) {
-        directionsRenderer.setOptions({
-            styles: null,
-            mapTypeId: null
-        });
+ // No-op; remove to avoid misleading code
     }
     
     // Add directions panel
@@ -300,7 +313,8 @@ function startLocationTracking() {
                 // Implement throttling - only update max once per 3 seconds
                 const now = Date.now();
                 if (now - lastLocationUpdate < 3000) {
-                    return; // Skip this update if it's too soon
+                    lastLocationUpdate = now;
+                    return;
                 }
                 
                 // Only update if the position actually changed
