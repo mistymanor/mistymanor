@@ -3,88 +3,209 @@ name: Update Website Image
 on:
   workflow_dispatch:
     inputs:
-      image_id:
-        description: 'Select the image to update'
+      source_type:
+        description: 'Image source'
         required: true
         type: choice
         options:
-          - homepage_banner
-          - trail_ride_banner
-          - lessons_banner
-          - volunteering_banner
-          - horses_banner
-          - contact_banner
-      image_file:
-        description: 'Upload the new image file (URL to an image)'
+          - 'existing_image'
+          - 'url_upload'
+        default: 'existing_image'
+      target_image:
+        description: 'Select image to update'
         required: true
+        type: string
+      source_image:
+        description: 'Select replacement image (if using existing image)'
+        required: false
+        type: string
+      image_url:
+        description: 'URL to image (if uploading new)'
+        required: false
         type: string
 
 jobs:
-  update-image:
+  generate-image-choices:
     runs-on: ubuntu-latest
+    outputs:
+      target_options: ${{ steps.set-targets.outputs.targets }}
+      source_options: ${{ steps.set-sources.outputs.sources }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download new image
+      - name: Generate target image choices
+        id: set-targets
         run: |
-          mkdir -p temp_images
-          curl -L "${{ github.event.inputs.image_file }}" -o temp_images/new_image.jpg
+          # Read site_images from configuration and format as GitHub choice options
+          TARGET_OPTIONS=$(jq -r '.site_images | map(.description + " (" + .path + ")") | join(",")' config/image-config.json)
+          echo "targets=$TARGET_OPTIONS" >> $GITHUB_OUTPUT
           
-      - name: Validate image
+          # Also create a mapping for easy reference
+          jq -r '.site_images | map(.description + " (" + .path + ")=" + .path) | join("\n")' config/image-config.json > target_mapping.txt
+          
+      - name: Generate source image choices  
+        id: set-sources
         run: |
-          # Check if file is a valid image
-          file_type=$(file -b --mime-type temp_images/new_image.jpg)
-          if [[ $file_type != image/* ]]; then
-            echo "Error: Uploaded file is not a valid image."
+          # Read available_images from configuration and format as GitHub choice options
+          SOURCE_OPTIONS=$(jq -r '.available_images | map(.description + " (" + .path + ")") | join(",")' config/image-config.json)
+          echo "sources=$SOURCE_OPTIONS" >> $GITHUB_OUTPUT
+          
+          # Also create a mapping for easy reference
+          jq -r '.available_images | map(.description + " (" + .path + ")=" + .path) | join("\n")' config/image-config.json > source_mapping.txt
+
+  update-image:
+    runs-on: ubuntu-latest
+    needs: generate-image-choices
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install image processing tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          
+      - name: Set target image path
+        id: set-target
+        run: |
+          TARGET_DESC="${{ github.event.inputs.target_image }}"
+          
+          # Look up the file path from the target image description
+          TARGET_PATH=$(cat target_mapping.txt | grep -E "^$TARGET_DESC=" | cut -d= -f2)
+          
+          if [ -z "$TARGET_PATH" ]; then
+            echo "Error: Could not find target image path for '$TARGET_DESC'"
             exit 1
           fi
           
-          # Optimize image if needed
-          convert temp_images/new_image.jpg -resize "1200x>" -quality 85 temp_images/optimized_image.jpg
-          
-      - name: Update image based on selection
+          echo "TARGET_PATH=$TARGET_PATH" >> $GITHUB_ENV
+          echo "Target image to update: $TARGET_PATH"
+
+      - name: Process source image
+        id: process-source
         run: |
-          # Map image_id to file path
-          case "${{ github.event.inputs.image_id }}" in
-            homepage_banner)
-              target_path="images/MMBanner.jpeg"
-              ;;
-            trail_ride_banner)
-              target_path="images/MMTrailBanner.jpeg"
-              ;;
-            lessons_banner)
-              target_path="images/MMLessonsBanner.jpeg"
-              ;;
-            volunteering_banner)
-              target_path="images/MMVolunteerBanner.jpeg"
-              ;;
-            horses_banner)
-              target_path="images/MMHorsesBanner.jpeg"
-              ;;
-            contact_banner)
-              target_path="images/MMContactBanner.jpeg"
-              ;;
-            *)
-              echo "Invalid image selection"
-              exit 1
-              ;;
-          esac
+          mkdir -p temp_images
           
-          # Make backup of original
-          cp "$target_path" "$target_path.backup"
+          # Handle different source types
+          if [ "${{ github.event.inputs.source_type }}" == "existing_image" ]; then
+            SOURCE_DESC="${{ github.event.inputs.source_image }}"
+            
+            # Look up the file path from the source image description
+            SOURCE_PATH=$(cat source_mapping.txt | grep -E "^$SOURCE_DESC=" | cut -d= -f2)
+            
+            if [ -z "$SOURCE_PATH" ]; then
+              echo "Error: Could not find source image path for '$SOURCE_DESC'"
+              exit 1
+            fi
+            
+            # Copy the existing image to temp directory
+            cp "$SOURCE_PATH" temp_images/source_image.jpg
+            echo "Using existing image: $SOURCE_PATH"
+            
+          elif [ "${{ github.event.inputs.source_type }}" == "url_upload" ]; then
+            # Download image from URL
+            IMAGE_URL="${{ github.event.inputs.image_url }}"
+            
+            if [ -z "$IMAGE_URL" ]; then
+              echo "Error: No image URL provided"
+              exit 1
+            fi
+            
+            echo "Downloading image from URL: $IMAGE_URL"
+            curl -L "$IMAGE_URL" -o temp_images/source_image.jpg
+            
+            if [ $? -ne 0 ]; then
+              echo "Error: Failed to download image from URL"
+              exit 1
+            fi
+          else
+            echo "Error: Invalid source type"
+            exit 1
+          fi
+          
+          # Validate the image
+          file_type=$(file -b --mime-type temp_images/source_image.jpg)
+          if [[ $file_type != image/* ]]; then
+            echo "Error: File is not a valid image (detected type: $file_type)"
+            exit 1
+          fi
+          
+          # Get dimensions of target image to maintain aspect ratio
+          if [ -f "$TARGET_PATH" ]; then
+            TARGET_DIMENSIONS=$(identify -format "%wx%h" "$TARGET_PATH")
+            echo "Target dimensions: $TARGET_DIMENSIONS"
+            
+            # Optimize and resize image to match target dimensions
+            convert temp_images/source_image.jpg -resize "$TARGET_DIMENSIONS" -quality 85 temp_images/optimized_image.jpg
+          else
+            # If target doesn't exist yet, use standard optimizations
+            convert temp_images/source_image.jpg -resize "1200x>" -quality 85 temp_images/optimized_image.jpg
+          fi
+          
+          echo "SOURCE_IMAGE=temp_images/optimized_image.jpg" >> $GITHUB_ENV
+
+      - name: Update the image
+        run: |
+          # Make backup of original if it exists
+          if [ -f "$TARGET_PATH" ]; then
+            mkdir -p backups
+            cp "$TARGET_PATH" "backups/$(basename "$TARGET_PATH").$(date +%Y%m%d%H%M%S).bak"
+          fi
+          
+          # Ensure target directory exists
+          mkdir -p $(dirname "$TARGET_PATH")
           
           # Replace image
-          cp temp_images/optimized_image.jpg "$target_path"
+          cp "$SOURCE_IMAGE" "$TARGET_PATH"
           
-          # Clean up
+          echo "Successfully updated $TARGET_PATH"
+      
+      - name: Update configuration file
+        run: |
+          # If this is a new image that doesn't exist in the config yet, add it
+          if ! grep -q "$TARGET_PATH" config/image-config.json; then
+            # Extract filename without path and extension for a default description
+            FILENAME=$(basename "$TARGET_PATH")
+            DESCRIPTION="${FILENAME%.*} Image"
+            
+            # Add to both site_images and available_images
+            NEW_ENTRY="{\"path\":\"$TARGET_PATH\",\"description\":\"$DESCRIPTION\",\"category\":\"Image\"}"
+            
+            # Use jq to modify the JSON file
+            jq --arg entry "$NEW_ENTRY" '.site_images += [$entry | fromjson]' config/image-config.json > config/temp.json
+            jq --arg entry "$NEW_ENTRY" '.available_images += [$entry | fromjson]' config/temp.json > config/image-config.json
+            rm config/temp.json
+            
+            echo "Added new image to configuration: $TARGET_PATH"
+          fi
+      
+      - name: Clean up
+        run: |
           rm -rf temp_images
       
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add images/
-          git commit -m "Update ${{ github.event.inputs.image_id }} image"
+          git add "$TARGET_PATH"
+          git add config/image-config.json
+          
+          # Only add backups directory if it exists
+          if [ -d "backups" ]; then
+            git add backups/
+          fi
+          
+          TARGET_DESC="${{ github.event.inputs.target_image }}"
+          SOURCE_TYPE="${{ github.event.inputs.source_type }}"
+          
+          if [ "$SOURCE_TYPE" == "existing_image" ]; then
+            SOURCE_DESC="${{ github.event.inputs.source_image }}"
+            COMMIT_MSG="Update image: $TARGET_DESC with $SOURCE_DESC"
+          else
+            COMMIT_MSG="Update image: $TARGET_DESC with uploaded image"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
           git push
 

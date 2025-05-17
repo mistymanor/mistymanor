@@ -1,0 +1,67 @@
+{
+  "site_images": [
+    {
+      "path": "images/MMBanner.jpeg",
+      "description": "Homepage Main Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMTrailBanner.jpeg",
+      "description": "Trail Rides Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMLessonsBanner.jpeg",
+      "description": "Lessons Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMVolunteerBanner.jpeg",
+      "description": "Volunteering Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMHorsesBanner.jpeg",
+      "description": "Meet Our Horses Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMContactBanner.jpeg",
+      "description": "Contact Page Banner",
+      "category": "Banner"
+    }
+  ],
+  "available_images": [
+    {
+      "path": "images/MMBanner.jpeg",
+      "description": "Homepage Main Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMTrailBanner.jpeg",
+      "description": "Trail Rides Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMLessonsBanner.jpeg",
+      "description": "Lessons Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMVolunteerBanner.jpeg",
+      "description": "Volunteering Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMHorsesBanner.jpeg",
+      "description": "Meet Our Horses Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/MMContactBanner.jpeg",
+      "description": "Contact Page Banner",
+      "category": "Banner"
+    }
+  ]
+}
+
