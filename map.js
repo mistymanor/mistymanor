@@ -33,29 +33,9 @@ function initMap() {
         scaleControl: true,
         streetViewControl: true,
         fullscreenControl: true,
-        mapId: "8812820e70aa14f0", // Add a valid Map ID for Advanced Markers
-        styles: [
-            {
-                "featureType": "all",
-                "elementType": "geometry.fill",
-                "stylers": [{"weight": "2.00"}]
-            },
-            {
-                "featureType": "landscape",
-                "elementType": "all",
-                "stylers": [{"color": "#f2f2f2"}]
-            },
-            {
-                "featureType": "poi",
-                "elementType": "all",
-                "stylers": [{"visibility": "off"}]
-            },
-            {
-                "featureType": "road",
-                "elementType": "all",
-                "stylers": [{"saturation": -100}, {"lightness": 45}]
-            }
-        ]
+        mapId: "8812820e70aa14f0" // Add a valid Map ID for Advanced Markers
+        // Note: When using mapId, styles should be configured in the Google Cloud Console
+        // instead of being set directly in the code
     };
 
     // Create the map instance
@@ -466,7 +446,7 @@ function createMarker(options) {
             map: options.map,
             title: options.title,
             content: options.content,
-            map_id: options.map.mapId // Ensure Map ID is passed to the marker
+            mapId: options.map.mapId // Ensure Map ID is passed to the marker
         });
     } else {
         // Fall back to regular Marker
