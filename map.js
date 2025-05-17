@@ -3,6 +3,37 @@
  * This file handles the enhanced Google Maps functionality and directions for the contact page
  */
 
+// Load the Google Maps API using the recommended loader pattern
+(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
+({key: "AIzaSyACz3vS-NSp_Zq2Z1IHzdt09SgS4XS4-l0", v: "weekly"});
+
+// Initialize required libraries and call initMap when everything is loaded
+async function initGoogleMaps() {
+  try {
+    // Load the required libraries first
+    const { Map } = await google.maps.importLibrary("maps");
+    const { Places } = await google.maps.importLibrary("places");
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    
+    // Now call the initMap function
+    if (typeof initMap === 'function') {
+      initMap();
+    } else {
+      console.error("initMap function not found.");
+    }
+  } catch (error) {
+    console.error("Error loading Google Maps:", error);
+    handleMapLoadError();
+  }
+}
+
+// Start loading when the document is ready
+if (document.readyState !== 'loading') {
+  initGoogleMaps();
+} else {
+  document.addEventListener('DOMContentLoaded', initGoogleMaps);
+}
+
 // Configuration
 const MISTY_MANOR_ADDRESS = "7621 Ridge Rd, Marriottsville, MD 21104";
 const MISTY_MANOR_COORDINATES = { lat: 39.364420, lng: -76.896384 };
@@ -412,27 +443,23 @@ function updateGeneralDirections(distanceInMiles) {
 function updateTransportOptions(distanceInMiles) {
     // Show/hide transport options based on distance
     if (distanceInMiles > 500) {
-        // Show all options for long distance
+        // Show only driving for long distance
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = 'none';
         document.getElementById('transport-bicycling').style.display = 'none';
     } else if (distanceInMiles > 50) {
         // Medium distance
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = 'none';
         document.getElementById('transport-bicycling').style.display = 'none';
     } else if (distanceInMiles > 10) {
         // Shorter distance
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-bicycling').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = 'none';
     } else {
-        // Very short distance, show all options
+        // Very short distance, show all applicable options
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-bicycling').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = distanceInMiles <= 5 ? 'inline-block' : 'none';
     }
