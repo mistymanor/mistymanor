@@ -874,11 +874,27 @@ table.adp-placemark td {
     background-color: #27ae60;
 }
 
+/* Hide transport mode buttons by default */
+.transport-mode-btn {
+    display: none;
+}
+
+/* Show transport mode buttons when directions are visible */
+.directions-visible .transport-mode-btn {
+    display: inline-block;
+    animation: fadeIn 0.3s ease;
+}
+
 /* Add a class for when directions are displayed */
 .directions-visible .route-info,
 .directions-visible #directions-panel {
     display: block;
     animation: fadeIn 0.5s ease;
+}
+
+/* Class to hide specific transport options based on distance */
+.hidden-option {
+    display: none !important;
 }
 
 @keyframes fadeIn {

@@ -499,28 +499,33 @@ function updateGeneralDirections(distanceInMiles) {
  * Update transport options based on distance
  */
 function updateTransportOptions(distanceInMiles) {
+    // First reset all transport modes by removing any distance-based hiding
+    document.getElementById('transport-driving').classList.remove('hidden-option');
+    document.getElementById('transport-walking').classList.remove('hidden-option');
+    document.getElementById('transport-bicycling').classList.remove('hidden-option');
+
     // Show/hide transport options based on distance
     if (distanceInMiles > 500) {
         // Show only driving for long distance
-        document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-walking').style.display = 'none';
-        document.getElementById('transport-bicycling').style.display = 'none';
+        document.getElementById('transport-walking').classList.add('hidden-option');
+        document.getElementById('transport-bicycling').classList.add('hidden-option');
     } else if (distanceInMiles > 50) {
         // Medium distance
-        document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-walking').style.display = 'none';
-        document.getElementById('transport-bicycling').style.display = 'none';
+        document.getElementById('transport-walking').classList.add('hidden-option');
+        document.getElementById('transport-bicycling').classList.add('hidden-option');
     } else if (distanceInMiles > 10) {
         // Shorter distance
-        document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-bicycling').style.display = 'inline-block';
-        document.getElementById('transport-walking').style.display = 'none';
+        document.getElementById('transport-walking').classList.add('hidden-option');
     } else {
         // Very short distance, show all applicable options
-        document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-bicycling').style.display = 'inline-block';
-        document.getElementById('transport-walking').style.display = distanceInMiles <= 5 ? 'inline-block' : 'none';
+        if (distanceInMiles > 5) {
+            document.getElementById('transport-walking').classList.add('hidden-option');
+        }
     }
+    
+    // Note: The initial visibility is controlled by .transport-mode-btn class
+    // When directions are visible, .directions-visible .transport-mode-btn shows the buttons
+    // The .hidden-option class will override this for specific buttons based on distance
 }
 
 /**
