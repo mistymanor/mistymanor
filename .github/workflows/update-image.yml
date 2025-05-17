@@ -14,9 +14,16 @@ on:
       target_image:
         description: 'Select image to update'
         required: true
-        type: string
+        type: choice
+        options:
+          - 'Homepage Main Banner (images/MMBanner.jpeg)'
+          - 'Trail Rides Banner (images/MMTrailBanner.jpeg)'
+          - 'Lessons Banner (images/MMLessonsBanner.jpeg)'
+          - 'Volunteering Banner (images/MMVolunteerBanner.jpeg)'
+          - 'Meet Our Horses Banner (images/MMHorsesBanner.jpeg)'
+          - 'Contact Page Banner (images/MMContactBanner.jpeg)'
       source_image:
-        description: 'Select replacement image (if using existing image)'
+        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg)'
         required: false
         type: string
       image_url:
@@ -25,38 +32,8 @@ on:
         type: string
 
 jobs:
-  generate-image-choices:
-    runs-on: ubuntu-latest
-    outputs:
-      target_options: ${{ steps.set-targets.outputs.targets }}
-      source_options: ${{ steps.set-sources.outputs.sources }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Generate target image choices
-        id: set-targets
-        run: |
-          # Read site_images from configuration and format as GitHub choice options
-          TARGET_OPTIONS=$(jq -r '.site_images | map(.description + " (" + .path + ")") | join(",")' config/image-config.json)
-          echo "targets=$TARGET_OPTIONS" >> $GITHUB_OUTPUT
-          
-          # Also create a mapping for easy reference
-          jq -r '.site_images | map(.description + " (" + .path + ")=" + .path) | join("\n")' config/image-config.json > target_mapping.txt
-          
-      - name: Generate source image choices  
-        id: set-sources
-        run: |
-          # Read available_images from configuration and format as GitHub choice options
-          SOURCE_OPTIONS=$(jq -r '.available_images | map(.description + " (" + .path + ")") | join(",")' config/image-config.json)
-          echo "sources=$SOURCE_OPTIONS" >> $GITHUB_OUTPUT
-          
-          # Also create a mapping for easy reference
-          jq -r '.available_images | map(.description + " (" + .path + ")=" + .path) | join("\n")' config/image-config.json > source_mapping.txt
-
   update-image:
     runs-on: ubuntu-latest
-    needs: generate-image-choices
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -71,11 +48,11 @@ jobs:
         run: |
           TARGET_DESC="${{ github.event.inputs.target_image }}"
           
-          # Look up the file path from the target image description
-          TARGET_PATH=$(cat target_mapping.txt | grep -E "^$TARGET_DESC=" | cut -d= -f2)
+          # Extract the path from the description (format: "Description (path)")
+          TARGET_PATH=$(echo "$TARGET_DESC" | sed -E 's/.*\((.*)\).*/\1/')
           
           if [ -z "$TARGET_PATH" ]; then
-            echo "Error: Could not find target image path for '$TARGET_DESC'"
+            echo "Error: Could not extract target image path from '$TARGET_DESC'"
             exit 1
           fi
           
@@ -89,14 +66,33 @@ jobs:
           
           # Handle different source types
           if [ "${{ github.event.inputs.source_type }}" == "existing_image" ]; then
-            SOURCE_DESC="${{ github.event.inputs.source_image }}"
+            SOURCE_NAME="${{ github.event.inputs.source_image }}"
             
-            # Look up the file path from the source image description
-            SOURCE_PATH=$(cat source_mapping.txt | grep -E "^$SOURCE_DESC=" | cut -d= -f2)
-            
-            if [ -z "$SOURCE_PATH" ]; then
-              echo "Error: Could not find source image path for '$SOURCE_DESC'"
+            if [ -z "$SOURCE_NAME" ]; then
+              echo "Error: No source image name provided"
               exit 1
+            fi
+            
+            echo "Looking for image with name: $SOURCE_NAME"
+            
+            # Find matching files in the images directory with any extension
+            # Look for common image extensions jpg, jpeg, png, gif, webp
+            MATCHES=$(find images -type f -name "$SOURCE_NAME.*" | grep -E '\.jpg$|\.jpeg$|\.png$|\.gif$|\.webp$')
+            MATCH_COUNT=$(echo "$MATCHES" | grep -v "^$" | wc -l)
+            
+            if [ "$MATCH_COUNT" -eq 0 ]; then
+              echo "Error: No matching images found for '$SOURCE_NAME'"
+              echo "Available images:"
+              find images -type f | grep -E '\.jpg$|\.jpeg$|\.png$|\.gif$|\.webp$' | xargs basename | sort
+              exit 1
+            elif [ "$MATCH_COUNT" -gt 1 ]; then
+              echo "Warning: Multiple matches found for '$SOURCE_NAME'. Using the first match."
+              echo "Matches:"
+              echo "$MATCHES"
+              # Use the first match
+              SOURCE_PATH=$(echo "$MATCHES" | head -n 1)
+            else
+              SOURCE_PATH="$MATCHES"
             fi
             
             # Copy the existing image to temp directory

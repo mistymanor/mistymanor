@@ -1,5 +1,4 @@
 (function () {
-    console.log("DOM fully loaded");
     // Directly select the mobile menu elements
     const hamburgerMenu = document.querySelector('.hamburger-menu');
     const closeBtn = document.querySelector('.close-btn');
@@ -8,9 +7,6 @@
     const submenuToggle = document.querySelector('.submenu-toggle');
     const backBtn = document.querySelector('.back-btn');
     const dropdownToggle = document.querySelector('.dropdown-toggle');
-
-    console.log("Hamburger menu element:", hamburgerMenu);
-    console.log("Mobile nav element:", mobileNav);
 
     // Simple hamburger menu click handler
     if (hamburgerMenu && mobileNav) {
