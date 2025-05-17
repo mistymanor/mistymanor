@@ -572,7 +572,6 @@ function calculateAndDisplayRoute(travelMode, showDirections = true) {
 function updateGeneralDirections(distanceInMiles) {
     // Get both general directions elements
     const generalDirectionsEl = document.getElementById('general-directions');
-    const fallbackDirectionsEl = document.getElementById('fallback-directions');
     
     // Prepare the HTML content
     let directionsHTML = '';
@@ -613,13 +612,6 @@ function updateGeneralDirections(distanceInMiles) {
     // Update general element with the same content
     if (generalDirectionsEl) {
         generalDirectionsEl.innerHTML = directionsHTML;
-    }
-    
-    // update fallback element if the search returns no results or fails
-    if (fallbackDirectionsEl && (document.getElementById("directions-panel").innerHTML === "" || 
-        document.getElementById("directions-panel").querySelector(".error") !== null || 
-        !userLocation)) {
-        fallbackDirectionsEl.innerHTML = directionsHTML;
     }
 }
 
@@ -706,7 +698,7 @@ function handleLocationError(error) {
     map.setCenter(MISTY_MANOR_COORDINATES);
     map.setZoom(13);
     
-    // Show fallback directions info - update both directions elements
+    // Show fallback directions info
     const generalDirectionsContent = `
         <h3>Finding Your Way to Misty Manor</h3>
         <p>Misty Manor Equestrian Center is located at 7621 Ridge Road, Marriottsville, MD 21104, nestled in the scenic countryside just outside of Baltimore.</p>
@@ -724,11 +716,6 @@ function handleLocationError(error) {
     const generalDirectionsEl = document.getElementById('general-directions');
     if (generalDirectionsEl) {
         generalDirectionsEl.innerHTML = generalDirectionsContent;
-    }
-    
-    const fallbackDirectionsEl = document.getElementById('fallback-directions');
-    if (fallbackDirectionsEl) {
-        fallbackDirectionsEl.innerHTML = generalDirectionsContent;
     }
     
     // Hide the route details section
