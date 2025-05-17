@@ -1,0 +1,90 @@
+name: Update Website Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_id:
+        description: 'Select the image to update'
+        required: true
+        type: choice
+        options:
+          - homepage_banner
+          - trail_ride_banner
+          - lessons_banner
+          - volunteering_banner
+          - horses_banner
+          - contact_banner
+      image_file:
+        description: 'Upload the new image file (URL to an image)'
+        required: true
+        type: string
+
+jobs:
+  update-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download new image
+        run: |
+          mkdir -p temp_images
+          curl -L "${{ github.event.inputs.image_file }}" -o temp_images/new_image.jpg
+          
+      - name: Validate image
+        run: |
+          # Check if file is a valid image
+          file_type=$(file -b --mime-type temp_images/new_image.jpg)
+          if [[ $file_type != image/* ]]; then
+            echo "Error: Uploaded file is not a valid image."
+            exit 1
+          fi
+          
+          # Optimize image if needed
+          convert temp_images/new_image.jpg -resize "1200x>" -quality 85 temp_images/optimized_image.jpg
+          
+      - name: Update image based on selection
+        run: |
+          # Map image_id to file path
+          case "${{ github.event.inputs.image_id }}" in
+            homepage_banner)
+              target_path="images/MMBanner.jpeg"
+              ;;
+            trail_ride_banner)
+              target_path="images/MMTrailBanner.jpeg"
+              ;;
+            lessons_banner)
+              target_path="images/MMLessonsBanner.jpeg"
+              ;;
+            volunteering_banner)
+              target_path="images/MMVolunteerBanner.jpeg"
+              ;;
+            horses_banner)
+              target_path="images/MMHorsesBanner.jpeg"
+              ;;
+            contact_banner)
+              target_path="images/MMContactBanner.jpeg"
+              ;;
+            *)
+              echo "Invalid image selection"
+              exit 1
+              ;;
+          esac
+          
+          # Make backup of original
+          cp "$target_path" "$target_path.backup"
+          
+          # Replace image
+          cp temp_images/optimized_image.jpg "$target_path"
+          
+          # Clean up
+          rm -rf temp_images
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add images/
+          git commit -m "Update ${{ github.event.inputs.image_id }} image"
+          git push
+
