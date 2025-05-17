@@ -753,9 +753,13 @@ footer p {
 
 #directions-panel {
     margin-top: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
     max-height: 300px;
     overflow-y: auto;
     padding-right: 10px;
+    clear: both;
 }
 
 #directions-panel::-webkit-scrollbar {
@@ -790,6 +794,32 @@ footer p {
     color: white;
 }
 
+/* Ensure all text in directions is clearly visible */
+.adp-placemark b, 
+.adp-placemark div, 
+.adp-stepicon, 
+.adp-substep, 
+.adp-placemark span {
+    color: white !important;
+}
+
 .adp-text {
     color: white;
+}
+
+/* Route information box styling */
+.route-info {
+    margin: 15px auto;
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+/* Ensure route details are centered */
+#route-details {
+    text-align: center;
+    margin: 0 auto;
 }
