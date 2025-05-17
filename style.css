@@ -801,10 +801,32 @@ footer p {
 }
 
 .adp-placemark, .adp-summary, .adp-legal {
-    background-color: rgba(58, 95, 143, 0.3);
-    color: white;
-    border: none;
-    padding: 10px;
+    background-color: rgba(58, 95, 143, 0.3) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px !important;
+}
+
+/* Target specific elements within the directions panel */
+.adp-fullwidth,
+table.adp-placemark,
+table.adp-placemark tr,
+table.adp-placemark td {
+    background-color: rgba(58, 95, 143, 0.3) !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Target individual cells within the adp-placemark tables */
+.adp-placemark td {
+    background-color: rgba(58, 95, 143, 0.3) !important;
+    color: white !important;
+    padding: 10px !important;
+}
+
+/* Target the start and end icons specifically */
+.adp-marker {
+    background-color: transparent !important; /* Keep icons visible */
 }
 
 /* Ensure all text in directions is clearly visible */
