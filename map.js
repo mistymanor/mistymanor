@@ -33,6 +33,7 @@ function initMap() {
         scaleControl: true,
         streetViewControl: true,
         fullscreenControl: true,
+        mapId: "8812820e70aa14f0", // Add a valid Map ID for Advanced Markers
         styles: [
             {
                 "featureType": "all",
@@ -81,9 +82,17 @@ function initMap() {
         content: `<div style="width:200px"><strong>Misty Manor Equestrian Center</strong><br>${MISTY_MANOR_ADDRESS}</div>`
     });
     
-    destinationMarker.addListener("click", function() {
-        infoWindow.open(map, destinationMarker);
-    });
+    // Use 'gmp-click' for AdvancedMarkerElements
+    if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+        destinationMarker.addListener("gmp-click", function() {
+            infoWindow.open(map, destinationMarker);
+        });
+    } else {
+        // Fallback to 'click' for regular markers
+        destinationMarker.addListener("click", function() {
+            infoWindow.open(map, destinationMarker);
+        });
+    }
     
     // Initialize directions services
     directionsService = new google.maps.DirectionsService();
@@ -241,9 +250,17 @@ function addUserMarker(location) {
         content: "<div style='width:150px'><strong>Your Location</strong></div>"
     });
     
-    userMarker.addListener("click", function() {
-        infoWindow.open(map, userMarker);
-    });
+    // Use 'gmp-click' for AdvancedMarkerElements
+    if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+        userMarker.addListener("gmp-click", function() {
+            infoWindow.open(map, userMarker);
+        });
+    } else {
+        // Fallback to 'click' for regular markers
+        userMarker.addListener("click", function() {
+            infoWindow.open(map, userMarker);
+        });
+    }
 }
 
 /**
@@ -448,7 +465,8 @@ function createMarker(options) {
             position: options.position,
             map: options.map,
             title: options.title,
-            content: options.content
+            content: options.content,
+            map_id: options.map.mapId // Ensure Map ID is passed to the marker
         });
     } else {
         // Fall back to regular Marker
