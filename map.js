@@ -48,6 +48,8 @@ let directionsRenderer;
 let userLocation;
 let watchId;
 let lastDistance;
+let directionsManuallyHidden = false; // Flag to track if directions were explicitly hidden by user
+let lastLocationUpdate = 0; // Timestamp for throttling location updates
 
 /**
  * Initialize the map when the page loads
@@ -159,6 +161,9 @@ function initMap() {
                 // Hide directions
                 container.classList.remove('directions-visible');
                 this.textContent = "Get Route Info";
+                // Set flag that directions were manually hidden
+                directionsManuallyHidden = true;
+                
                 // Add the icon back
                 this.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -174,6 +179,9 @@ function initMap() {
             } else {
                 // Show directions
                 container.classList.add('directions-visible');
+                // Reset flag since directions are now being shown explicitly
+                directionsManuallyHidden = false;
+                
                 this.textContent = "Hide Route Info";
                 // Add the icon but with hide icon
                 this.innerHTML = `
@@ -272,12 +280,28 @@ function startLocationTracking() {
                     lng: position.coords.longitude
                 };
                 
+                // Implement throttling - only update max once per 3 seconds
+                const now = Date.now();
+                if (now - lastLocationUpdate < 3000) {
+                    return; // Skip this update if it's too soon
+                }
+                
                 // Only update if the position actually changed
                 if (userLocation.lat !== newLocation.lat || userLocation.lng !== newLocation.lng) {
                     userLocation = newLocation;
                     updateUserMarker(userLocation);
+                    lastLocationUpdate = now;
                     
-                    // Recalculate route with current transport mode, but respect visibility state
+                    // If directions were manually hidden by the user, don't show them again automatically
+                    if (directionsManuallyHidden) {
+                        // Calculate route in the background without showing it
+                        const activeMode = document.querySelector('.transport-mode.active');
+                        const travelMode = activeMode ? activeMode.getAttribute('data-mode') : 'DRIVING';
+                        calculateAndDisplayRoute(travelMode, false);
+                        return;
+                    }
+                    
+                    // Otherwise, respect the current visibility state
                     const container = document.querySelector('.contact-container').parentNode;
                     const isDirectionsVisible = container.classList.contains('directions-visible');
                     
@@ -458,7 +482,8 @@ function calculateAndDisplayRoute(travelMode, showDirections = true) {
                 `;
                 
                 // Show detailed directions if showDirections is true
-                if (showDirections) {
+                // Only show directions if explicitly requested AND not manually hidden
+                if (showDirections && !directionsManuallyHidden) {
                     // Add the directions-visible class to show the route info and directions panel
                     const container = document.querySelector('.contact-container').parentNode;
                     if (!container.classList.contains('directions-visible')) {
@@ -468,7 +493,13 @@ function calculateAndDisplayRoute(travelMode, showDirections = true) {
                         updateTransportVisibility();
                     }
                 } else {
-                    // If not showing directions, ensure transport buttons remain hidden
+                    // If not showing directions or they were manually hidden, ensure they stay hidden
+                    if (directionsManuallyHidden) {
+                        const container = document.querySelector('.contact-container').parentNode;
+                        container.classList.remove('directions-visible');
+                    }
+                    
+                    // Ensure transport buttons remain hidden
                     document.querySelectorAll('.transport-mode-btn').forEach(btn => {
                         btn.style.display = 'none';
                     });
