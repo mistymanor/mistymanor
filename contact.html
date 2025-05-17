@@ -9,6 +9,8 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" href="/images/MMIcon.png" type="image/png">
+    <!-- Google Maps API key will be injected here during build -->
+    <meta name="google-maps-api-key" content="GOOGLE_MAPS_API_KEY_PLACEHOLDER">
     <script src="/preload.js"></script>
 </head>
 <body>
@@ -66,7 +68,7 @@
                     <li><a href="/trail-rides/">Trail Rides &emsp;&emsp;&emsp;🥾🌲</a></li>
                     <li><a href="/lessons/">Lessons &emsp;&emsp;&emsp;&emsp;&emsp;📚</a></li>
                     <li><a href="/volunteering/">Volunteering &emsp;&emsp;&ensp;🙋</a></li>
-                    <l1><a href="/meet-horses/">Our Horses &emsp;&emsp;&nbsp; 🐴❤️</a></l1>
+                    <li><a href="/meet-horses/">Our Horses &emsp;&emsp;&nbsp; 🐴❤️</a></li>
                     <li><a href="/whats-new/">What's New &emsp;&emsp;&nbsp;🤩🎉</a></li>
                 </ul>
             </nav>
@@ -139,7 +141,7 @@ Wednesday - Sunday: 9am - 7pm</pre>
             </div>
             
             <div id="directions-panel"></div>
-            <div id="general-directions"></div>
+            <div id="fallback-directions"></div>
         </div>
     </section>
 

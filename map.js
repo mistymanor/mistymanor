@@ -4,8 +4,21 @@
  */
 
 // Load the Google Maps API using the recommended loader pattern
-(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
-({key: "AIzaSyACz3vS-NSp_Zq2Z1IHzdt09SgS4XS4-l0", v: "weekly"});
+// Function to load the Google Maps API
+function loadGoogleMapsAPI() {
+  // Get the API key from the meta tag (injected during build)
+  const apiKeyMeta = document.querySelector('meta[name="google-maps-api-key"]');
+  const apiKey = apiKeyMeta ? apiKeyMeta.getAttribute('content') : '';
+  
+  if (!apiKey) {
+    console.error('Google Maps API key is missing. The map may not function correctly.');
+    return;
+  }
+
+  // Use the Google Maps JavaScript API loader
+  (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
+  ({key: apiKey, v: "weekly"});
+}
 
 // Initialize required libraries and call initMap when everything is loaded
 async function initGoogleMaps() {
@@ -29,9 +42,13 @@ async function initGoogleMaps() {
 
 // Start loading when the document is ready
 if (document.readyState !== 'loading') {
+  loadGoogleMapsAPI();
   initGoogleMaps();
 } else {
-  document.addEventListener('DOMContentLoaded', initGoogleMaps);
+  document.addEventListener('DOMContentLoaded', function() {
+    loadGoogleMapsAPI();
+    initGoogleMaps();
+  });
 }
 
 // Configuration
@@ -523,11 +540,16 @@ function calculateAndDisplayRoute(travelMode, showDirections = true) {
  * Update the general directions guidance based on distance
  */
 function updateGeneralDirections(distanceInMiles) {
+    // Get both general directions elements
     const generalDirectionsEl = document.getElementById('general-directions');
+    const fallbackDirectionsEl = document.getElementById('fallback-directions');
+    
+    // Prepare the HTML content
+    let directionsHTML = '';
     
     if (distanceInMiles > 500) {
         // Long distance - recommend flight
-        generalDirectionsEl.innerHTML = `
+        directionsHTML = `
             <h3>Getting to Misty Manor</h3>
             <p>You are approximately ${Math.round(distanceInMiles)} miles away from Misty Manor.</p>
             <p><strong>Recommended travel method:</strong> Flight to Baltimore/Washington International Airport (BWI), then rent a car or use a ride service to reach us (approximately 25 miles from BWI).</p>
@@ -535,7 +557,7 @@ function updateGeneralDirections(distanceInMiles) {
         `;
     } else if (distanceInMiles > 100) {
         // Medium distance - recommend driving with hotel
-        generalDirectionsEl.innerHTML = `
+        directionsHTML = `
             <h3>Getting to Misty Manor</h3>
             <p>You are approximately ${Math.round(distanceInMiles)} miles away from Misty Manor.</p>
             <p><strong>Recommended travel method:</strong> Drive to our location (about ${Math.round(distanceInMiles/60)} hours at highway speeds).</p>
@@ -543,19 +565,28 @@ function updateGeneralDirections(distanceInMiles) {
         `;
     } else if (distanceInMiles > 30) {
         // Near distance - simple driving directions
-        generalDirectionsEl.innerHTML = `
+        directionsHTML = `
             <h3>Getting to Misty Manor</h3>
             <p>You are approximately ${Math.round(distanceInMiles)} miles away from Misty Manor.</p>
-            <p><strong>Recommended travel method:</strong> Drive directly to our location (about ${Math.round(distanceInMiles/30)} minutes).</p>
+            <p><strong>Recommended travel method:</strong> Drive directly to our location (about ${Math.round((distanceInMiles/30)*60)} minutes).</p>
             <p>We have ample parking available for visitors.</p>
         `;
     } else {
         // Local distance - very simple directions
-        generalDirectionsEl.innerHTML = `
+        directionsHTML = `
             <h3>Getting to Misty Manor</h3>
             <p>You are only ${Math.round(distanceInMiles)} miles away from Misty Manor!</p>
             <p>Follow the turn-by-turn directions below to reach us. We have parking available on-site.</p>
         `;
+    }
+    
+    // Update both elements with the same content
+    if (generalDirectionsEl) {
+        generalDirectionsEl.innerHTML = directionsHTML;
+    }
+    
+    if (fallbackDirectionsEl) {
+        fallbackDirectionsEl.innerHTML = directionsHTML;
     }
 }
 
@@ -642,8 +673,8 @@ function handleLocationError(error) {
     map.setCenter(MISTY_MANOR_COORDINATES);
     map.setZoom(13);
     
-    // Show fallback directions info
-    document.getElementById('general-directions').innerHTML = `
+    // Show fallback directions info - update both directions elements
+    const generalDirectionsContent = `
         <h3>Finding Your Way to Misty Manor</h3>
         <p>Misty Manor Riding School is located at 7621 Ridge Road, Marriottsville, MD 21104, nestled in the scenic countryside just outside of Baltimore.</p>
         <p>From I-70:</p>
@@ -655,6 +686,17 @@ function handleLocationError(error) {
             <li>Misty Manor will be on your left after 0.3 miles!</li>
         </ul>
     `;
+    
+    // Update both directions elements
+    const generalDirectionsEl = document.getElementById('general-directions');
+    if (generalDirectionsEl) {
+        generalDirectionsEl.innerHTML = generalDirectionsContent;
+    }
+    
+    const fallbackDirectionsEl = document.getElementById('fallback-directions');
+    if (fallbackDirectionsEl) {
+        fallbackDirectionsEl.innerHTML = generalDirectionsContent;
+    }
     
     // Hide the route details section
     document.getElementById('route-details').innerHTML = 

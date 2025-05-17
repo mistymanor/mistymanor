@@ -31,6 +31,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Replace Google Maps API Key
+        run: |
+          # Replace the API key placeholder with the actual API key from GitHub secrets
+          # TEMPORARY: Using hardcoded API key for testing - REMEMBER TO REVERT BEFORE COMMITTING!
+          find . -name "*.html" -type f -exec sed -i "s/GOOGLE_MAPS_API_KEY_PLACEHOLDER/AIzaSyACz3vS-NSp_Zq2Z1IHzdt09SgS4XS4-l0/g" {} \;
+          # PRODUCTION VERSION (uncomment when ready):
+          # find . -name "*.html" -type f -exec sed -i "s/GOOGLE_MAPS_API_KEY_PLACEHOLDER/${{ secrets.GOOGLE_MAPS_API_KEY }}/g" {} \;
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: URL Rewrite (directory-style)
