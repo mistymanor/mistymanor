@@ -610,12 +610,15 @@ function updateGeneralDirections(distanceInMiles) {
         `;
     }
     
-    // Update both elements with the same content
+    // Update general element with the same content
     if (generalDirectionsEl) {
         generalDirectionsEl.innerHTML = directionsHTML;
     }
     
-    if (fallbackDirectionsEl) {
+    // update fallback element if the search returns no results or fails
+    if (fallbackDirectionsEl && (document.getElementById("directions-panel").innerHTML === "" || 
+        document.getElementById("directions-panel").querySelector(".error") !== null || 
+        !userLocation)) {
         fallbackDirectionsEl.innerHTML = directionsHTML;
     }
 }
@@ -706,7 +709,7 @@ function handleLocationError(error) {
     // Show fallback directions info - update both directions elements
     const generalDirectionsContent = `
         <h3>Finding Your Way to Misty Manor</h3>
-        <p>Misty Manor Riding School is located at 7621 Ridge Road, Marriottsville, MD 21104, nestled in the scenic countryside just outside of Baltimore.</p>
+        <p>Misty Manor Equestrian Center is located at 7621 Ridge Road, Marriottsville, MD 21104, nestled in the scenic countryside just outside of Baltimore.</p>
         <p>From I-70:</p>
         <ul>
             <li>Take I-70 West towards Frederick</li>
