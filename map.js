@@ -60,7 +60,7 @@ function initMap() {
     // Create the map instance
     map = new google.maps.Map(document.getElementById("map"), mapOptions);
     
-    // Create a marker for Misty Manor using AdvancedMarkerElement
+    // Create a marker for Misty Manor using createMarker helper function
     const markerContent = document.createElement('div');
     markerContent.innerHTML = `
         <div class="map-marker" title="Misty Manor Equestrian Center">
@@ -68,11 +68,12 @@ function initMap() {
         </div>
     `;
     
-    destinationMarker = new google.maps.marker.AdvancedMarkerElement({
+    destinationMarker = createMarker({
         position: MISTY_MANOR_COORDINATES,
         map: map,
         title: "Misty Manor Equestrian Center",
-        content: markerContent
+        content: markerContent,
+        icon: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
     });
     
     // Add info window for the destination marker
@@ -221,11 +222,12 @@ function addUserMarker(location) {
         </div>
     `;
     
-    userMarker = new google.maps.marker.AdvancedMarkerElement({
+    userMarker = createMarker({
         position: location,
         map: map,
         title: "Your Location",
-        content: userMarkerContent
+        content: userMarkerContent,
+        icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
     });
     
     // Fit map to include both markers
@@ -434,6 +436,37 @@ function handleLocationError(error) {
 
 // The DOMContentLoaded event listener is removed because the Google Maps API will call initMap directly
 // when it finishes loading via the callback parameter
+/**
+ * Helper function to create a marker, using AdvancedMarkerElement if available,
+ * or falling back to a regular Marker if not
+ */
+function createMarker(options) {
+    // Check if AdvancedMarkerElement is available
+    if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+        // Use AdvancedMarkerElement
+        return new google.maps.marker.AdvancedMarkerElement({
+            position: options.position,
+            map: options.map,
+            title: options.title,
+            content: options.content
+        });
+    } else {
+        // Fall back to regular Marker
+        const marker = new google.maps.Marker({
+            position: options.position,
+            map: options.map,
+            title: options.title,
+            icon: options.icon
+        });
+
+        // Add setPosition method to match AdvancedMarkerElement API
+        marker.setPosition = function(position) {
+            google.maps.Marker.prototype.setPosition.call(this, position);
+        };
+
+        return marker;
+    }
+}
 
 // Handle map loading errors
 function handleMapLoadError() {
