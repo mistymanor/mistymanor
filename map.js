@@ -277,9 +277,16 @@ function startLocationTracking() {
                     userLocation = newLocation;
                     updateUserMarker(userLocation);
                     
-                    // Recalculate route with current transport mode
+                    // Recalculate route with current transport mode, but respect visibility state
+                    const container = document.querySelector('.contact-container').parentNode;
+                    const isDirectionsVisible = container.classList.contains('directions-visible');
+                    
+                    // Get the active transportation mode
                     const activeMode = document.querySelector('.transport-mode.active');
-                    calculateAndDisplayRoute(activeMode ? activeMode.getAttribute('data-mode') : 'DRIVING');
+                    const travelMode = activeMode ? activeMode.getAttribute('data-mode') : 'DRIVING';
+                    
+                    // Only show directions if they were already visible
+                    calculateAndDisplayRoute(travelMode, isDirectionsVisible);
                 }
             },
             // Error callback
@@ -405,6 +412,11 @@ function updateUserMarker(location) {
 function calculateAndDisplayRoute(travelMode, showDirections = true) {
     if (!userLocation) return;
     
+    // Validate travel mode to prevent undefined errors
+    if (!travelMode || !google.maps.TravelMode[travelMode]) {
+        travelMode = 'DRIVING'; // Default to DRIVING if invalid mode
+    }
+    
     const mode = google.maps.TravelMode[travelMode];
     
     // Set active mode button
@@ -451,7 +463,15 @@ function calculateAndDisplayRoute(travelMode, showDirections = true) {
                     const container = document.querySelector('.contact-container').parentNode;
                     if (!container.classList.contains('directions-visible')) {
                         container.classList.add('directions-visible');
+                        
+                        // Make transport buttons visible if directions are shown
+                        updateTransportVisibility();
                     }
+                } else {
+                    // If not showing directions, ensure transport buttons remain hidden
+                    document.querySelectorAll('.transport-mode-btn').forEach(btn => {
+                        btn.style.display = 'none';
+                    });
                 }
                 
                 // Show general travel recommendations based on distance
