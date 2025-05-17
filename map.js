@@ -62,7 +62,7 @@ function initMap() {
     
     // Add info window for the destination marker
     const infoWindow = new google.maps.InfoWindow({
-        content: `<div style="width:200px"><strong>Misty Manor Equestrian Center</strong><br>${MISTY_MANOR_ADDRESS}</div>`
+        content: `<div style="width:200px; color: #000000;"><strong>Misty Manor Equestrian Center</strong><br>${MISTY_MANOR_ADDRESS}</div>`
     });
     
     // Use 'gmp-click' for AdvancedMarkerElements
@@ -238,7 +238,7 @@ function addUserMarker(location) {
     
     // Add info window for user marker
     const infoWindow = new google.maps.InfoWindow({
-        content: "<div style='width:150px'><strong>Your Location</strong></div>"
+        content: "<div style='width:150px; color: #000000;'><strong>Your Location</strong></div>"
     });
     
     // Use 'gmp-click' for AdvancedMarkerElements
