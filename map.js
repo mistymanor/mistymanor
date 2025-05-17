@@ -412,27 +412,23 @@ function updateGeneralDirections(distanceInMiles) {
 function updateTransportOptions(distanceInMiles) {
     // Show/hide transport options based on distance
     if (distanceInMiles > 500) {
-        // Show all options for long distance
+        // Show only driving for long distance
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = 'none';
         document.getElementById('transport-bicycling').style.display = 'none';
     } else if (distanceInMiles > 50) {
         // Medium distance
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = 'none';
         document.getElementById('transport-bicycling').style.display = 'none';
     } else if (distanceInMiles > 10) {
         // Shorter distance
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-bicycling').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = 'none';
     } else {
-        // Very short distance, show all options
+        // Very short distance, show all applicable options
         document.getElementById('transport-driving').style.display = 'inline-block';
-        document.getElementById('transport-transit').style.display = 'inline-block';
         document.getElementById('transport-bicycling').style.display = 'inline-block';
         document.getElementById('transport-walking').style.display = distanceInMiles <= 5 ? 'inline-block' : 'none';
     }
