@@ -1,12 +1,22 @@
 {
   "site_images": [
     {
-      "path": "images/MMBanner.jpeg",
-      "description": "Homepage Main Banner",
+      "path": "images/MMBannerWithLogo.jpg",
+      "description": "Main Banner with Logo",
       "category": "Banner"
     },
     {
-      "path": "images/MMTrailBanner.jpeg",
+      "path": "images/MMLogo.png",
+      "description": "Logo for Site Usage",
+      "category": "Logo"
+    },
+    {
+      "path": "images/MMIcon.png",
+      "description": "Tiny Logo for Tab Icon",
+      "category": "Icon"
+    },
+    {
+      "path": "images/MMTrailRidesBanner.jpeg",
       "description": "Trail Rides Banner",
       "category": "Banner"
     },
@@ -16,7 +26,7 @@
       "category": "Banner"
     },
     {
-      "path": "images/MMVolunteerBanner.jpeg",
+      "path": "images/MMVolunteersBanner.jpg",
       "description": "Volunteering Banner",
       "category": "Banner"
     },
@@ -29,16 +39,51 @@
       "path": "images/MMContactBanner.jpeg",
       "description": "Contact Page Banner",
       "category": "Banner"
+    },
+    {
+      "path": "images/MMWhatsNewBanner.png",
+      "description": "Whats New Page Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/footer.jpeg",
+      "description": "Site Footer Image",
+      "category": "Site Elements"
+    },
+    {
+      "path": "images/CowboyCampAd.jpg",
+      "description": "Cowboy Camp Advertisement",
+      "category": "Advertisement"
+    },
+    {
+      "path": "images/HelloSpring.png",
+      "description": "Hello Spring Promotion Banner",
+      "category": "Promotion"
+    },
+    {
+      "path": "images/WoodstockAd.png",
+      "description": "Woodstock Event Advertisement",
+      "category": "Advertisement"
     }
   ],
   "available_images": [
     {
-      "path": "images/MMBanner.jpeg",
-      "description": "Homepage Main Banner",
+      "path": "images/MMBannerWithLogo.jpg",
+      "description": "Main Banner with Logo",
       "category": "Banner"
     },
     {
-      "path": "images/MMTrailBanner.jpeg",
+      "path": "images/MMLogo.png",
+      "description": "Logo for Site Usage",
+      "category": "Logo"
+    },
+    {
+      "path": "images/MMIcon.png",
+      "description": "Tiny Logo for Tab Icon",
+      "category": "Icon"
+    },
+    {
+      "path": "images/MMTrailRidesBanner.jpeg",
       "description": "Trail Rides Banner",
       "category": "Banner"
     },
@@ -48,7 +93,7 @@
       "category": "Banner"
     },
     {
-      "path": "images/MMVolunteerBanner.jpeg",
+      "path": "images/MMVolunteersBanner.jpg",
       "description": "Volunteering Banner",
       "category": "Banner"
     },
@@ -61,6 +106,31 @@
       "path": "images/MMContactBanner.jpeg",
       "description": "Contact Page Banner",
       "category": "Banner"
+    },
+    {
+      "path": "images/MMWhatsNewBanner.png",
+      "description": "Whats New Page Banner",
+      "category": "Banner"
+    },
+    {
+      "path": "images/footer.jpeg",
+      "description": "Site Footer Image",
+      "category": "Site Elements"
+    },
+    {
+      "path": "images/CowboyCampAd.jpg",
+      "description": "Cowboy Camp Advertisement",
+      "category": "Advertisement"
+    },
+    {
+      "path": "images/HelloSpring.png",
+      "description": "Hello Spring Promotion Banner",
+      "category": "Promotion"
+    },
+    {
+      "path": "images/WoodstockAd.png",
+      "description": "Woodstock Event Advertisement",
+      "category": "Advertisement"
     }
   ]
 }
