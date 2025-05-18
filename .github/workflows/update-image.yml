@@ -3,14 +3,6 @@ name: Update Website Image
 on:
   workflow_dispatch:
     inputs:
-      source_type:
-        description: 'Image source'
-        required: true
-        type: choice
-        options:
-          - 'existing_image'
-          - 'url_upload'
-        default: 'existing_image'
       target_image:
         description: 'Select image to update'
         required: true
@@ -31,11 +23,7 @@ on:
           - 'Woodstock Event Advertisement (images/WoodstockAd.png)'
       source_image:
         description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg). WARNING!!! -> This will overwrite any existing image with the same name.'
-        required: false
-        type: string
-      image_url:
-        description: 'URL to image (if uploading new)'
-        required: false
+        required: true
         type: string
 
 jobs:
@@ -45,10 +33,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Install image processing tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
           
       - name: Set target image path
         id: set-target
@@ -71,82 +55,38 @@ jobs:
         run: |
           mkdir -p temp_images
           
-          # Handle different source types
-          if [ "${{ github.event.inputs.source_type }}" == "existing_image" ]; then
-            SOURCE_NAME="${{ github.event.inputs.source_image }}"
-            
-            if [ -z "$SOURCE_NAME" ]; then
-              echo "Error: No source image name provided"
-              exit 1
-            fi
-            
-            echo "Looking for image with name: $SOURCE_NAME"
-            
-            # Find matching files in the images directory with any extension
-            # Look for common image extensions jpg, jpeg, png, gif, webp
-            MATCHES=$(find images -type f -name "$SOURCE_NAME.*" | grep -E '\.jpg$|\.jpeg$|\.png$|\.gif$|\.webp$')
-            MATCH_COUNT=$(echo "$MATCHES" | grep -v "^$" | wc -l)
-            
-            if [ "$MATCH_COUNT" -eq 0 ]; then
-              echo "Error: No matching images found for '$SOURCE_NAME'"
-              echo "Available images:"
-              find images -type f | grep -E '\.jpg$|\.jpeg$|\.png$|\.gif$|\.webp$' | xargs basename | sort
-              exit 1
-            elif [ "$MATCH_COUNT" -gt 1 ]; then
-              echo "Warning: Multiple matches found for '$SOURCE_NAME'. Using the first match."
-              echo "Matches:"
-              echo "$MATCHES"
-              # Use the first match
-              SOURCE_PATH=$(echo "$MATCHES" | head -n 1)
-            else
-              SOURCE_PATH="$MATCHES"
-            fi
-            
-            # Copy the existing image to temp directory
-            cp "$SOURCE_PATH" temp_images/source_image.jpg
-            echo "Using existing image: $SOURCE_PATH"
-            
-          elif [ "${{ github.event.inputs.source_type }}" == "url_upload" ]; then
-            # Download image from URL
-            IMAGE_URL="${{ github.event.inputs.image_url }}"
-            
-            if [ -z "$IMAGE_URL" ]; then
-              echo "Error: No image URL provided"
-              exit 1
-            fi
-            
-            echo "Downloading image from URL: $IMAGE_URL"
-            curl -L "$IMAGE_URL" -o temp_images/source_image.jpg
-            
-            if [ $? -ne 0 ]; then
-              echo "Error: Failed to download image from URL"
-              exit 1
-            fi
-          else
-            echo "Error: Invalid source type"
+          SOURCE_NAME="${{ github.event.inputs.source_image }}"
+          
+          if [ -z "$SOURCE_NAME" ]; then
+            echo "Error: No source image name provided"
             exit 1
           fi
           
-          # Validate the image
-          file_type=$(file -b --mime-type temp_images/source_image.jpg)
-          if [[ $file_type != image/* ]]; then
-            echo "Error: File is not a valid image (detected type: $file_type)"
+          echo "Looking for image with name: $SOURCE_NAME"
+          
+          # Find matching files in the images directory with any extension
+          # Look for common image extensions jpg, jpeg, png, gif, webp
+          MATCHES=$(find images -type f -name "$SOURCE_NAME.*" | grep -E '\.jpg$|\.jpeg$|\.png$|\.gif$|\.webp$')
+          MATCH_COUNT=$(echo "$MATCHES" | grep -v "^$" | wc -l)
+          
+          if [ "$MATCH_COUNT" -eq 0 ]; then
+            echo "Error: No matching images found for '$SOURCE_NAME'"
+            echo "Available images:"
+            find images -type f | grep -E '\.jpg$|\.jpeg$|\.png$|\.gif$|\.webp$' | xargs basename | sort
             exit 1
-          fi
-          
-          # Get dimensions of target image to maintain aspect ratio
-          if [ -f "$TARGET_PATH" ]; then
-            TARGET_DIMENSIONS=$(identify -format "%wx%h" "$TARGET_PATH")
-            echo "Target dimensions: $TARGET_DIMENSIONS"
-            
-            # Optimize and resize image to match target dimensions
-            convert temp_images/source_image.jpg -resize "$TARGET_DIMENSIONS" -quality 85 temp_images/optimized_image.jpg
+          elif [ "$MATCH_COUNT" -gt 1 ]; then
+            echo "Warning: Multiple matches found for '$SOURCE_NAME'. Using the first match."
+            echo "Matches:"
+            echo "$MATCHES"
+            # Use the first match
+            SOURCE_PATH=$(echo "$MATCHES" | head -n 1)
           else
-            # If target doesn't exist yet, use standard optimizations
-            convert temp_images/source_image.jpg -resize "1200x>" -quality 85 temp_images/optimized_image.jpg
+            SOURCE_PATH="$MATCHES"
           fi
           
-          echo "SOURCE_IMAGE=temp_images/optimized_image.jpg" >> $GITHUB_ENV
+          # Set source image path for later use
+          echo "SOURCE_IMAGE=$SOURCE_PATH" >> $GITHUB_ENV
+          echo "Using existing image: $SOURCE_PATH"
 
       - name: Update the image
         run: |
@@ -154,15 +94,8 @@ jobs:
           TARGET_DIR=$(dirname "$TARGET_PATH")
           TARGET_BASENAME=$(basename "$TARGET_PATH" | cut -d. -f1)
           
-          # Get the source file extension
-          SOURCE_EXT=$(file -b --mime-type "$SOURCE_IMAGE" | sed 's|image/||g' | sed 's|jpeg|jpg|g')
-          if [ "$SOURCE_EXT" = "x-ms-bmp" ]; then SOURCE_EXT="bmp"; fi
-          if [ "$SOURCE_EXT" = "svg+xml" ]; then SOURCE_EXT="svg"; fi
-          
-          # If extension is not recognized, try to get it from the filename
-          if [ "$SOURCE_EXT" = "" ] || [ "$SOURCE_EXT" = "image" ]; then
-            SOURCE_EXT=$(echo "$SOURCE_IMAGE" | grep -o '\.[^.]*$' | sed 's/\.//')
-          fi
+          # Get the source file extension from filename
+          SOURCE_EXT=$(echo "$SOURCE_IMAGE" | grep -o '\.[^.]*$' | sed 's/\.//')
           
           # Make backup of original if it exists
           if [ -f "$TARGET_PATH" ]; then
@@ -296,14 +229,8 @@ jobs:
           fi
           
           TARGET_DESC="${{ github.event.inputs.target_image }}"
-          SOURCE_TYPE="${{ github.event.inputs.source_type }}"
-          
-          if [ "$SOURCE_TYPE" == "existing_image" ]; then
-            SOURCE_DESC="${{ github.event.inputs.source_image }}"
-            COMMIT_MSG="Update image: $TARGET_DESC with $SOURCE_DESC (extension-agnostic)"
-          else
-            COMMIT_MSG="Update image: $TARGET_DESC with uploaded image (extension-agnostic)"
-          fi
+          SOURCE_DESC="${{ github.event.inputs.source_image }}"
+          COMMIT_MSG="Update image: $TARGET_DESC with $SOURCE_DESC (extension-agnostic)"
           
           git commit -m "$COMMIT_MSG"
           git push
