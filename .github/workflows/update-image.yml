@@ -16,14 +16,21 @@ on:
         required: true
         type: choice
         options:
-          - 'Homepage Main Banner (images/MMBanner.jpeg)'
-          - 'Trail Rides Banner (images/MMTrailBanner.jpeg)'
+          - 'Main Banner with Logo (images/MMBannerWithLogo.jpg)'
+          - 'Logo for Site Usage (images/MMLogo.png)'
+          - 'Tiny Logo for Tab Icon (images/MMIcon.png)'
+          - 'Trail Rides Banner (images/MMTrailRidesBanner.jpeg)'
           - 'Lessons Banner (images/MMLessonsBanner.jpeg)'
-          - 'Volunteering Banner (images/MMVolunteerBanner.jpeg)'
+          - 'Volunteering Banner (images/MMVolunteersBanner.jpg)'
           - 'Meet Our Horses Banner (images/MMHorsesBanner.jpeg)'
           - 'Contact Page Banner (images/MMContactBanner.jpeg)'
+          - 'Whats New Page Banner (images/MMWhatsNewBanner.png)'
+          - 'Site Footer Image (images/footer.jpeg)'
+          - 'Cowboy Camp Advertisement (images/CowboyCampAd.jpg)'
+          - 'Hello Spring Promotion Banner (images/HelloSpring.png)'
+          - 'Woodstock Event Advertisement (images/WoodstockAd.png)'
       source_image:
-        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg)'
+        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg). WARNING!!! -> This will overwrite any existing image with the same name.'
         required: false
         type: string
       image_url:
@@ -143,19 +150,42 @@ jobs:
 
       - name: Update the image
         run: |
+          # Get the target basename and directory
+          TARGET_DIR=$(dirname "$TARGET_PATH")
+          TARGET_BASENAME=$(basename "$TARGET_PATH" | cut -d. -f1)
+          
+          # Get the source file extension
+          SOURCE_EXT=$(file -b --mime-type "$SOURCE_IMAGE" | sed 's|image/||g' | sed 's|jpeg|jpg|g')
+          if [ "$SOURCE_EXT" = "x-ms-bmp" ]; then SOURCE_EXT="bmp"; fi
+          if [ "$SOURCE_EXT" = "svg+xml" ]; then SOURCE_EXT="svg"; fi
+          
+          # If extension is not recognized, try to get it from the filename
+          if [ "$SOURCE_EXT" = "" ] || [ "$SOURCE_EXT" = "image" ]; then
+            SOURCE_EXT=$(echo "$SOURCE_IMAGE" | grep -o '\.[^.]*$' | sed 's/\.//')
+          fi
+          
           # Make backup of original if it exists
           if [ -f "$TARGET_PATH" ]; then
             mkdir -p backups
             cp "$TARGET_PATH" "backups/$(basename "$TARGET_PATH").$(date +%Y%m%d%H%M%S).bak"
           fi
           
+          # Generate new file path with original basename but new extension
+          NEW_FILE_PATH="$TARGET_DIR/$TARGET_BASENAME.$SOURCE_EXT"
+          
+          # Remove any existing files with the target basename (all extensions)
+          find "$TARGET_DIR" -name "$TARGET_BASENAME.*" -type f -delete
+          
           # Ensure target directory exists
-          mkdir -p $(dirname "$TARGET_PATH")
+          mkdir -p "$TARGET_DIR"
           
-          # Replace image
-          cp "$SOURCE_IMAGE" "$TARGET_PATH"
+          # Copy the source image with the new filename
+          cp "$SOURCE_IMAGE" "$NEW_FILE_PATH"
           
-          echo "Successfully updated $TARGET_PATH"
+          echo "Successfully updated image: $TARGET_BASENAME (old: $TARGET_PATH, new: $NEW_FILE_PATH)"
+          
+          # Record the new path for the commit
+          echo "UPDATED_IMAGE_PATH=$NEW_FILE_PATH" >> $GITHUB_ENV
       
       - name: Update configuration file
         run: |
@@ -180,11 +210,84 @@ jobs:
         run: |
           rm -rf temp_images
       
+      - name: Update HTML references
+        run: |
+          # Create a script to update HTML files to use extension-agnostic references
+          cat > update_references.py << 'EOF'
+          import os
+          import re
+          import sys
+
+          def update_html_references(html_dir, image_basename):
+              """Update HTML files to use extension-agnostic image references."""
+              pattern = re.compile(r'(src=["\'](/images/|images/|/|))' + re.escape(image_basename) + r'\.[a-zA-Z]+(["\'"])')
+              replacement = r'\1' + image_basename + r'\3'
+              
+              for root, _, files in os.walk(html_dir):
+                  for file in files:
+                      if file.endswith('.html'):
+                          filepath = os.path.join(root, file)
+                          try:
+                              with open(filepath, 'r') as f:
+                                  content = f.read()
+                              
+                              # Check if this file contains references to the image
+                              if re.search(pattern, content):
+                                  print(f"Updating references in {filepath}")
+                                  updated_content = re.sub(pattern, replacement, content)
+                                  
+                                  with open(filepath, 'w') as f:
+                                      f.write(updated_content)
+                          except Exception as e:
+                              print(f"Error processing {filepath}: {e}")
+
+          if __name__ == "__main__":
+              if len(sys.argv) != 3:
+                  print("Usage: python update_references.py <html_directory> <image_basename>")
+                  sys.exit(1)
+                  
+              html_dir = sys.argv[1]
+              image_basename = sys.argv[2]
+              update_html_references(html_dir, image_basename)
+          EOF
+          
+          # Make the script executable
+          chmod +x update_references.py
+          
+          # Extract basename from the target path
+          TARGET_BASENAME=$(basename "$TARGET_PATH" | cut -d. -f1)
+          
+          # Run the script to update references
+          python update_references.py . "$TARGET_BASENAME"
+          
+          echo "Updated HTML references to use extension-agnostic image paths"
+
+      - name: Update image entry in config
+        run: |
+          # Update the config file to reflect the new file path if it changed
+          if [ "$TARGET_PATH" != "$UPDATED_IMAGE_PATH" ]; then
+            # Use jq to replace the path in the config file
+            jq --arg old_path "$TARGET_PATH" --arg new_path "$UPDATED_IMAGE_PATH" '
+            (.site_images[] | select(.path == $old_path)).path = $new_path |
+            (.available_images[] | select(.path == $old_path)).path = $new_path
+            ' config/image-config.json > config/temp.json
+            
+            mv config/temp.json config/image-config.json
+            echo "Updated image path in config file"
+          fi
+
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add "$TARGET_PATH"
+          
+          # Add all HTML files that might have been modified
+          git add "*.html"
+          
+          # Add the new image file
+          git add "$UPDATED_IMAGE_PATH"
+          
+          # Add config file
           git add config/image-config.json
           
           # Only add backups directory if it exists
@@ -197,9 +300,9 @@ jobs:
           
           if [ "$SOURCE_TYPE" == "existing_image" ]; then
             SOURCE_DESC="${{ github.event.inputs.source_image }}"
-            COMMIT_MSG="Update image: $TARGET_DESC with $SOURCE_DESC"
+            COMMIT_MSG="Update image: $TARGET_DESC with $SOURCE_DESC (extension-agnostic)"
           else
-            COMMIT_MSG="Update image: $TARGET_DESC with uploaded image"
+            COMMIT_MSG="Update image: $TARGET_DESC with uploaded image (extension-agnostic)"
           fi
           
           git commit -m "$COMMIT_MSG"

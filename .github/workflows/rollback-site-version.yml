@@ -1,0 +1,143 @@
+name: Rollback to Previous Site Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_rollback:
+        description: 'Type "CONFIRM" to proceed with rolling back to the previous version of the site'
+        required: true
+        type: string
+      rollback_steps:
+        description: 'How many deployments to roll back (usually 1 for previous version)'
+        required: true
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+        default: '1'
+
+jobs:
+  find-deployments:
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_sha: ${{ steps.find-deployment.outputs.deployment_sha }}
+      current_version: ${{ steps.get-info.outputs.current_version }}
+      rollback_version: ${{ steps.get-info.outputs.rollback_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100  # Fetch enough history to find previous deployments
+
+      - name: Check confirmation code
+        run: |
+          if [ "${{ github.event.inputs.confirm_rollback }}" != "CONFIRM" ]; then
+            echo "Error: You must type 'CONFIRM' to proceed with the rollback."
+            echo "This is to prevent accidental rollbacks."
+            exit 1
+          fi
+
+      - name: Find deployment commits
+        id: find-deployment
+        run: |
+          # Get the deployment commit history
+          DEPLOYMENT_COMMITS=$(git log --pretty=format:"%H %s" | grep -E "Deploy|Deployment|GitHub Pages")
+          
+          # How many steps back to go based on user input
+          STEPS_BACK=${{ github.event.inputs.rollback_steps }}
+          
+          # Get the commit SHA for the deployment we want to roll back to
+          ROLLBACK_SHA=$(echo "$DEPLOYMENT_COMMITS" | awk "NR==$((STEPS_BACK+1)) {print \$1}")
+          
+          if [ -z "$ROLLBACK_SHA" ]; then
+            echo "Error: Could not find a deployment to roll back to."
+            echo "Available deployment history:"
+            echo "$DEPLOYMENT_COMMITS" | head -n 5
+            exit 1
+          fi
+          
+          echo "deployment_sha=$ROLLBACK_SHA" >> $GITHUB_OUTPUT
+          echo "Found rollback target: $ROLLBACK_SHA"
+
+      - name: Get version information
+        id: get-info
+        run: |
+          # Get current version info
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          CURRENT_DATE=$(git show -s --format=%ci $CURRENT_COMMIT)
+          CURRENT_MESSAGE=$(git show -s --format=%s $CURRENT_COMMIT)
+          echo "current_version=$CURRENT_MESSAGE ($CURRENT_DATE)" >> $GITHUB_OUTPUT
+          
+          # Get rollback version info
+          ROLLBACK_SHA="${{ steps.find-deployment.outputs.deployment_sha }}"
+          ROLLBACK_DATE=$(git show -s --format=%ci $ROLLBACK_SHA)
+          ROLLBACK_MESSAGE=$(git show -s --format=%s $ROLLBACK_SHA)
+          echo "rollback_version=$ROLLBACK_MESSAGE ($ROLLBACK_DATE)" >> $GITHUB_OUTPUT
+          
+          echo "Current version: $CURRENT_MESSAGE ($CURRENT_DATE)"
+          echo "Rolling back to: $ROLLBACK_MESSAGE ($ROLLBACK_DATE)"
+
+  confirm-rollback:
+    needs: find-deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display rollback information
+        run: |
+          echo "=== SITE ROLLBACK SUMMARY ==="
+          echo "Current version: ${{ needs.find-deployments.outputs.current_version }}"
+          echo "Rolling back to: ${{ needs.find-deployments.outputs.rollback_version }}"
+          echo "============================="
+          
+          # Final confirmation check
+          if [ "${{ github.event.inputs.confirm_rollback }}" != "CONFIRM" ]; then
+            echo "Error: Confirmation failed. Rollback aborted."
+            exit 1
+          fi
+          
+          echo "Proceeding with rollback..."
+
+  rollback-site:
+    needs: [find-deployments, confirm-rollback]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100  # Need enough history to go back to the target commit
+      
+      - name: Reset to previous version
+        run: |
+          echo "Resetting to previous version at commit: ${{ needs.find-deployments.outputs.deployment_sha }}"
+          
+          # Create a new branch for the rollback
+          git checkout -b rollback-$(date +%Y%m%d%H%M%S)
+          
+          # Perform a hard reset to the target commit
+          git reset --hard ${{ needs.find-deployments.outputs.deployment_sha }}
+          
+          # Setup Git identity for the commit
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Rollback Action"
+          
+          # Commit message describes the rollback
+          ROLLBACK_MSG="Rollback to previous site version: ${{ needs.find-deployments.outputs.rollback_version }}"
+          
+          # Force push this state to the main branch
+          git checkout main
+          git reset --hard FETCH_HEAD
+          git add .
+          git commit -m "$ROLLBACK_MSG"
+          git push --force origin main
+      
+      - name: Trigger deployment
+        run: |
+          echo "Triggering deployment of the rolled-back version..."
+          # The deployment will happen automatically when changes are pushed to main
+          
+      - name: Rollback complete
+        run: |
+          echo "✅ Rollback complete!"
+          echo "The site has been restored to the previous version."
+          echo "Previous version: ${{ needs.find-deployments.outputs.rollback_version }}"
+
