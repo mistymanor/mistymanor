@@ -196,6 +196,10 @@ jobs:
             echo "Successfully renamed source to target name:"
             ls -la "$NEW_FILE_PATH"
             md5sum "$NEW_FILE_PATH" || shasum "$NEW_FILE_PATH"
+            
+            # Remove the original source file after successful copy
+            echo "Removing original source file: $SOURCE_IMAGE"
+            rm -v "$SOURCE_IMAGE"
           else
             echo "ERROR: Failed to create new image file!"
           fi
@@ -237,16 +241,16 @@ jobs:
         run: |
           echo "Extension changed from .$TARGET_EXT to .$SOURCE_EXT - updating references"
           
-          # Create a script to update HTML files to use extension-agnostic references
+          # Create a script to update HTML files to use the new file extension
           cat > update_references.py << 'EOF'
           import os
           import re
           import sys
 
-          def update_html_references(html_dir, image_basename):
-              """Update HTML files to use extension-agnostic image references."""
-              pattern = re.compile(r'(src=["\'](/images/|images/|/|))' + re.escape(image_basename) + r'\.[a-zA-Z]+(["\'"])')
-              replacement = r'\1' + image_basename + r'\3'
+          def update_html_references(html_dir, image_basename, old_ext, new_ext):
+              """Update HTML files to use the new file extension."""
+              pattern = re.compile(r'(src=["\'](/images/|images/|/|))' + re.escape(image_basename) + r'\.' + re.escape(old_ext) + r'(["\'"])')
+              replacement = r'\1' + image_basename + r'.' + new_ext + r'\3'
               
               for root, _, files in os.walk(html_dir):
                   for file in files:
@@ -256,9 +260,9 @@ jobs:
                               with open(filepath, 'r') as f:
                                   content = f.read()
                               
-                              # Check if this file contains references to the image
+                              # Check if this file contains references to the image with old extension
                               if re.search(pattern, content):
-                                  print(f"Updating references in {filepath}")
+                                  print(f"Updating references in {filepath} from {image_basename}.{old_ext} to {image_basename}.{new_ext}")
                                   updated_content = re.sub(pattern, replacement, content)
                                   
                                   with open(filepath, 'w') as f:
@@ -267,13 +271,15 @@ jobs:
                               print(f"Error processing {filepath}: {e}")
 
           if __name__ == "__main__":
-              if len(sys.argv) != 3:
-                  print("Usage: python update_references.py <html_directory> <image_basename>")
+              if len(sys.argv) != 5:
+                  print("Usage: python update_references.py <html_directory> <image_basename> <old_extension> <new_extension>")
                   sys.exit(1)
                   
               html_dir = sys.argv[1]
               image_basename = sys.argv[2]
-              update_html_references(html_dir, image_basename)
+              old_ext = sys.argv[3]
+              new_ext = sys.argv[4]
+              update_html_references(html_dir, image_basename, old_ext, new_ext)
           EOF
           
           # Make the script executable
@@ -282,10 +288,10 @@ jobs:
           # Extract basename from the target path
           TARGET_BASENAME=$(basename "$TARGET_PATH" | cut -d. -f1)
           
-          # Run the script to update references
-          python update_references.py . "$TARGET_BASENAME"
+          # Run the script to update references with the specific extensions
+          python update_references.py . "$TARGET_BASENAME" "$TARGET_EXT" "$SOURCE_EXT"
           
-          echo "Updated HTML references to use extension-agnostic image paths"
+          echo "Updated HTML references from $TARGET_BASENAME.$TARGET_EXT to $TARGET_BASENAME.$SOURCE_EXT"
           
           # Clean up the script after it's been used
           rm -f update_references.py
@@ -309,16 +315,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Create a debug file to test if git can detect changes
-          echo "===== CREATING DEBUG FILE ====="
-          DEBUG_FILE="debug_$(date +%s).txt"
-          echo "Creating debug file: $DEBUG_FILE"
-          echo "This is a debug file created at $(date)" > "$DEBUG_FILE"
-          echo "Workflow run ID: $GITHUB_RUN_ID" >> "$DEBUG_FILE"
-          echo "Target image: $UPDATED_IMAGE_PATH" >> "$DEBUG_FILE"
-          echo "Source image: $SOURCE_IMAGE" >> "$DEBUG_FILE"
-          cat "$DEBUG_FILE"
-          
           # Debug: Show which files have been modified
           echo "===== GIT STATUS BEFORE ADDING FILES ====="
           git status
@@ -328,16 +324,10 @@ jobs:
           ls -la "$UPDATED_IMAGE_PATH" || echo "Target file not found"
           echo "Archive directory:"
           ls -la images/archive/ || echo "Archive directory not found"
-          echo "Debug file:"
-          ls -la "$DEBUG_FILE" || echo "Debug file not found"
           
           # Show git diff to see what's changed
           echo "===== GIT DIFF BEFORE ADDING FILES ====="
           git diff
-          
-          # Add the debug file first to verify git can detect changes
-          echo "===== ADDING DEBUG FILE ====="
-          git add -f "$DEBUG_FILE" || echo "Failed to add debug file"
           
           # Add all HTML files that might have been modified
           echo "===== ADDING HTML FILES ====="
