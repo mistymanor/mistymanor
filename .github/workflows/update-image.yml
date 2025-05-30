@@ -90,38 +90,124 @@ jobs:
 
       - name: Update the image
         run: |
-          # Get the target basename and directory
+          echo "===== STARTING IMAGE UPDATE PROCESS ====="
+          
+          # Store the complete target filename and path
           TARGET_DIR=$(dirname "$TARGET_PATH")
-          TARGET_BASENAME=$(basename "$TARGET_PATH" | cut -d. -f1)
+          TARGET_FILENAME=$(basename "$TARGET_PATH")
+          TARGET_BASENAME=$(echo "$TARGET_FILENAME" | cut -d. -f1)
+          TARGET_EXT=$(echo "$TARGET_FILENAME" | grep -o '\.[^.]*$' | sed 's/\.//')
           
-          # Get the source file extension from filename
+          echo "Target directory: $TARGET_DIR"
+          echo "Target filename: $TARGET_FILENAME"
+          echo "Target basename: $TARGET_BASENAME"
+          echo "Target extension: $TARGET_EXT"
+          
+          # Get the source file details
+          SOURCE_FILENAME=$(basename "$SOURCE_IMAGE")
           SOURCE_EXT=$(echo "$SOURCE_IMAGE" | grep -o '\.[^.]*$' | sed 's/\.//')
+          echo "Source filename: $SOURCE_FILENAME"
+          echo "Source extension: $SOURCE_EXT"
           
-          # Create archive folder inside the images directory and move original image there
-          if [ -f "$TARGET_PATH" ]; then
-            # Create archive folder inside the images directory
-            mkdir -p "images/archive"
-            # Move the original target image to the archive folder with original filename
-            mv "$TARGET_PATH" "images/archive/$(basename "$TARGET_PATH")"
-            echo "Moved original image to images/archive/$(basename "$TARGET_PATH")"
+          # Flag to check if we need to update references (only if extension changes)
+          EXTENSION_CHANGED=false
+          if [ "$TARGET_EXT" != "$SOURCE_EXT" ]; then
+            echo "Extension will change from .$TARGET_EXT to .$SOURCE_EXT - will update references"
+            EXTENSION_CHANGED=true
           fi
           
-          # Generate new file path with original basename but new extension
-          NEW_FILE_PATH="$TARGET_DIR/$TARGET_BASENAME.$SOURCE_EXT"
+          # Debug: Check if source and target exist and show file info
+          echo "===== FILE CHECKSUMS BEFORE OPERATIONS ====="
+          echo "Source image ($SOURCE_IMAGE):"
+          if [ -f "$SOURCE_IMAGE" ]; then
+            ls -la "$SOURCE_IMAGE"
+            md5sum "$SOURCE_IMAGE" || shasum "$SOURCE_IMAGE"
+          else
+            echo "ERROR: Source image does not exist!"
+          fi
           
-          # Remove any existing files with the target basename (all extensions)
-          find "$TARGET_DIR" -name "$TARGET_BASENAME.*" -type f -delete
+          echo "Target image ($TARGET_PATH):"
+          if [ -f "$TARGET_PATH" ]; then
+            ls -la "$TARGET_PATH"
+            md5sum "$TARGET_PATH" || shasum "$TARGET_PATH"
+          else
+            echo "Target image does not exist (will be created)"
+          fi
+          
+          # Create archive folder inside the images directory
+          echo "===== CREATING ARCHIVE DIRECTORY ====="
+          mkdir -p "images/archive"
+          echo "Created archive directory: images/archive"
+          ls -la "images"
+          
+          # Move the original target image to the archive folder
+          if [ -f "$TARGET_PATH" ]; then
+            # Keep the original filename in the archive
+            ARCHIVE_PATH="images/archive/$TARGET_FILENAME"
+            
+            # Check if a file with the same name already exists in the archive
+            if [ -f "$ARCHIVE_PATH" ]; then
+              # Add timestamp only if needed for uniqueness
+              TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+              ARCHIVE_PATH="images/archive/${TARGET_BASENAME}_${TIMESTAMP}.${TARGET_EXT}"
+              echo "File already exists in archive, using timestamped name: $ARCHIVE_PATH"
+            fi
+            
+            echo "Moving target image to archive: $TARGET_PATH -> $ARCHIVE_PATH"
+            # Use direct mv command instead of cp + rm
+            mv -v "$TARGET_PATH" "$ARCHIVE_PATH"
+            
+            # Verify archive file was created
+            if [ -f "$ARCHIVE_PATH" ]; then
+              echo "Successfully archived original image:"
+              ls -la "$ARCHIVE_PATH"
+              md5sum "$ARCHIVE_PATH" || shasum "$ARCHIVE_PATH"
+            else
+              echo "ERROR: Failed to move file to archive!"
+            fi
+          else
+            echo "No existing target image to archive"
+          fi
+          
+          # Generate new file path with original target basename but source extension
+          NEW_FILE_PATH="$TARGET_DIR/$TARGET_BASENAME.$SOURCE_EXT"
+          echo "New file path will be: $NEW_FILE_PATH"
           
           # Ensure target directory exists
           mkdir -p "$TARGET_DIR"
+          echo "Ensured target directory exists: $TARGET_DIR"
           
-          # Copy the source image with the new filename
-          cp "$SOURCE_IMAGE" "$NEW_FILE_PATH"
+          # Remove any existing files with the target basename (all extensions)
+          # This is to ensure we don't have duplicates with different extensions
+          echo "Removing any existing files with basename: $TARGET_BASENAME"
+          find "$TARGET_DIR" -name "$TARGET_BASENAME.*" -type f -print -delete
           
+          # Copy the source image to the target location with target basename
+          echo "Copying source image to target location: $SOURCE_IMAGE -> $NEW_FILE_PATH"
+          cp -v "$SOURCE_IMAGE" "$NEW_FILE_PATH"
+          
+          # Add a small modification to the copied file to ensure it's different
+          # This adds a comment to the end of the file that won't affect the image
+          echo "Adding modification to ensure file is different"
+          echo "<!-- Modified at $(date) -->" >> "$NEW_FILE_PATH"
+          
+          # Verify new file was created
+          if [ -f "$NEW_FILE_PATH" ]; then
+            echo "Successfully renamed source to target name:"
+            ls -la "$NEW_FILE_PATH"
+            md5sum "$NEW_FILE_PATH" || shasum "$NEW_FILE_PATH"
+          else
+            echo "ERROR: Failed to create new image file!"
+          fi
+          
+          echo "===== IMAGE UPDATE PROCESS COMPLETE ====="
           echo "Successfully updated image: $TARGET_BASENAME (old: $TARGET_PATH, new: $NEW_FILE_PATH, source: $SOURCE_IMAGE)"
           
-          # Record the new path for the commit
+          # Record important variables for later steps
           echo "UPDATED_IMAGE_PATH=$NEW_FILE_PATH" >> $GITHUB_ENV
+          echo "EXTENSION_CHANGED=$EXTENSION_CHANGED" >> $GITHUB_ENV
+          echo "TARGET_EXT=$TARGET_EXT" >> $GITHUB_ENV
+          echo "SOURCE_EXT=$SOURCE_EXT" >> $GITHUB_ENV
       
       - name: Update configuration file
         run: |
@@ -147,7 +233,10 @@ jobs:
           rm -rf temp_images
       
       - name: Update HTML references
+        if: ${{ env.EXTENSION_CHANGED == 'true' }}
         run: |
+          echo "Extension changed from .$TARGET_EXT to .$SOURCE_EXT - updating references"
+          
           # Create a script to update HTML files to use extension-agnostic references
           cat > update_references.py << 'EOF'
           import os
@@ -220,37 +309,61 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
+          # Create a debug file to test if git can detect changes
+          echo "===== CREATING DEBUG FILE ====="
+          DEBUG_FILE="debug_$(date +%s).txt"
+          echo "Creating debug file: $DEBUG_FILE"
+          echo "This is a debug file created at $(date)" > "$DEBUG_FILE"
+          echo "Workflow run ID: $GITHUB_RUN_ID" >> "$DEBUG_FILE"
+          echo "Target image: $UPDATED_IMAGE_PATH" >> "$DEBUG_FILE"
+          echo "Source image: $SOURCE_IMAGE" >> "$DEBUG_FILE"
+          cat "$DEBUG_FILE"
+          
           # Debug: Show which files have been modified
-          echo "=== Git status before adding files ==="
+          echo "===== GIT STATUS BEFORE ADDING FILES ====="
           git status
           
-          echo "=== Checking if files exist ==="
+          echo "===== CHECKING IF FILES EXIST ====="
           echo "Target path: $UPDATED_IMAGE_PATH"
           ls -la "$UPDATED_IMAGE_PATH" || echo "Target file not found"
           echo "Archive directory:"
           ls -la images/archive/ || echo "Archive directory not found"
+          echo "Debug file:"
+          ls -la "$DEBUG_FILE" || echo "Debug file not found"
+          
+          # Show git diff to see what's changed
+          echo "===== GIT DIFF BEFORE ADDING FILES ====="
+          git diff
+          
+          # Add the debug file first to verify git can detect changes
+          echo "===== ADDING DEBUG FILE ====="
+          git add -f "$DEBUG_FILE" || echo "Failed to add debug file"
           
           # Add all HTML files that might have been modified
-          echo "=== Adding HTML files ==="
+          echo "===== ADDING HTML FILES ====="
           find . -name "*.html" -type f -exec git add {} \;
           
           # Add the new image file with force flag
-          echo "=== Adding updated image: $UPDATED_IMAGE_PATH ==="
+          echo "===== ADDING UPDATED IMAGE: $UPDATED_IMAGE_PATH ====="
           git add -f "$UPDATED_IMAGE_PATH" || echo "Failed to add updated image"
           
           # Add config file
-          echo "=== Adding config file ==="
+          echo "===== ADDING CONFIG FILE ====="
           git add -f config/image-config.json || echo "Failed to add config file"
           
           # Add the archive directory to include the moved image
           if [ -d "images/archive" ]; then
-            echo "=== Adding archive directory ==="
+            echo "===== ADDING ARCHIVE DIRECTORY ====="
             git add -f images/archive/ || echo "Failed to add archive directory"
           fi
           
           # Debug: Show which files have been staged
-          echo "=== Git status after adding files ==="
+          echo "===== GIT STATUS AFTER ADDING FILES ====="
           git status
+          
+          # Show git diff for staged changes
+          echo "===== GIT DIFF FOR STAGED CHANGES ====="
+          git diff --staged
           
           TARGET_DESC="${{ github.event.inputs.target_image }}"
           SOURCE_DESC="${{ github.event.inputs.source_image }}"
