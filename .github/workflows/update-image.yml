@@ -97,10 +97,13 @@ jobs:
           # Get the source file extension from filename
           SOURCE_EXT=$(echo "$SOURCE_IMAGE" | grep -o '\.[^.]*$' | sed 's/\.//')
           
-          # Make backup of original if it exists
+          # Create archive folder inside the images directory and move original image there
           if [ -f "$TARGET_PATH" ]; then
-            mkdir -p backups
-            cp "$TARGET_PATH" "backups/$(basename "$TARGET_PATH").$(date +%Y%m%d%H%M%S).bak"
+            # Create archive folder inside the images directory
+            mkdir -p "images/archive"
+            # Move the original target image to the archive folder with original filename
+            mv "$TARGET_PATH" "images/archive/$(basename "$TARGET_PATH")"
+            echo "Moved original image to images/archive/$(basename "$TARGET_PATH")"
           fi
           
           # Generate new file path with original basename but new extension
@@ -223,9 +226,9 @@ jobs:
           # Add config file
           git add config/image-config.json
           
-          # Only add backups directory if it exists
-          if [ -d "backups" ]; then
-            git add backups/
+          # Add the archive directory to include the moved image
+          if [ -d "images/archive" ]; then
+            git add images/archive/
           fi
           
           TARGET_DESC="${{ github.event.inputs.target_image }}"
