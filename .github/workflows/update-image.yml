@@ -197,6 +197,9 @@ jobs:
           python update_references.py . "$TARGET_BASENAME"
           
           echo "Updated HTML references to use extension-agnostic image paths"
+          
+          # Clean up the script after it's been used
+          rm -f update_references.py
 
       - name: Update image entry in config
         run: |
