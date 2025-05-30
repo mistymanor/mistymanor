@@ -118,7 +118,7 @@ jobs:
           # Copy the source image with the new filename
           cp "$SOURCE_IMAGE" "$NEW_FILE_PATH"
           
-          echo "Successfully updated image: $TARGET_BASENAME (old: $TARGET_PATH, new: $NEW_FILE_PATH)"
+          echo "Successfully updated image: $TARGET_BASENAME (old: $TARGET_PATH, new: $NEW_FILE_PATH, source: $SOURCE_IMAGE)"
           
           # Record the new path for the commit
           echo "UPDATED_IMAGE_PATH=$NEW_FILE_PATH" >> $GITHUB_ENV
@@ -220,19 +220,37 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Add all HTML files that might have been modified
-          git add "*.html"
+          # Debug: Show which files have been modified
+          echo "=== Git status before adding files ==="
+          git status
           
-          # Add the new image file
-          git add "$UPDATED_IMAGE_PATH"
+          echo "=== Checking if files exist ==="
+          echo "Target path: $UPDATED_IMAGE_PATH"
+          ls -la "$UPDATED_IMAGE_PATH" || echo "Target file not found"
+          echo "Archive directory:"
+          ls -la images/archive/ || echo "Archive directory not found"
+          
+          # Add all HTML files that might have been modified
+          echo "=== Adding HTML files ==="
+          find . -name "*.html" -type f -exec git add {} \;
+          
+          # Add the new image file with force flag
+          echo "=== Adding updated image: $UPDATED_IMAGE_PATH ==="
+          git add -f "$UPDATED_IMAGE_PATH" || echo "Failed to add updated image"
           
           # Add config file
-          git add config/image-config.json
+          echo "=== Adding config file ==="
+          git add -f config/image-config.json || echo "Failed to add config file"
           
           # Add the archive directory to include the moved image
           if [ -d "images/archive" ]; then
-            git add images/archive/
+            echo "=== Adding archive directory ==="
+            git add -f images/archive/ || echo "Failed to add archive directory"
           fi
+          
+          # Debug: Show which files have been staged
+          echo "=== Git status after adding files ==="
+          git status
           
           TARGET_DESC="${{ github.event.inputs.target_image }}"
           SOURCE_DESC="${{ github.event.inputs.source_image }}"
