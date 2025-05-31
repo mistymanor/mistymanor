@@ -1,4 +1,0 @@
-This is a debug file created at Fri May 30 21:24:05 UTC 2025
-Workflow run ID: 15356054491
-Target image: images/MMHorsesBanner.jpeg
-Source image: images/test.jpeg
