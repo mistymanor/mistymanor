@@ -22,7 +22,7 @@ on:
           - 'Hello Spring Promotion Banner (images/HelloSpring.png)'
           - 'Woodstock Event Advertisement (images/WoodstockAd.png)'
       source_image:
-        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg). WARNING!!! -> This will overwrite any existing image with the same name.'
+        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg). WARNING!!! -> This will overwrite any existing image with the same name. ALSO!! -> We currently support image extensions: jpg, jpeg, png, gif, webp. If you need to convert it to one of these, you must do so (can be done online here: https://cloudconvert.com/image-converter). If you change the extension of the image, it will update all references in HTML files.'
         required: true
         type: string
 
@@ -202,6 +202,7 @@ jobs:
             rm -v "$SOURCE_IMAGE"
           else
             echo "ERROR: Failed to create new image file!"
+            exit 1
           fi
           
           echo "===== IMAGE UPDATE PROCESS COMPLETE ====="
@@ -212,6 +213,14 @@ jobs:
           echo "EXTENSION_CHANGED=$EXTENSION_CHANGED" >> $GITHUB_ENV
           echo "TARGET_EXT=$TARGET_EXT" >> $GITHUB_ENV
           echo "SOURCE_EXT=$SOURCE_EXT" >> $GITHUB_ENV
+
+          echo "Final check for removal of source image:"
+          if [ -f "$SOURCE_IMAGE" ]; then
+            echo "Source image still exists after copy, attempting removal now"
+            rm -v "$SOURCE_IMAGE"
+          else
+            echo "Source image successfully removed"
+          fi
       
       - name: Update configuration file
         run: |
@@ -361,4 +370,9 @@ jobs:
           
           git commit -m "$COMMIT_MSG"
           git push
-
+      
+      - name: Trigger GitHub Pages Deployment
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: "Deploy static content to Pages"
+          token: ${{ secrets.GITHUB_TOKEN }}
