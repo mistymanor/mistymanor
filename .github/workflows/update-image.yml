@@ -144,7 +144,7 @@ jobs:
           echo "Created archive directory: images/archive"
           ls -la "images"
           
-          # Move the original target image to the archive folder
+          # Move the original target image to the archive folder (simple move operation)
           if [ -f "$TARGET_PATH" ]; then
             # Keep the original filename in the archive
             ARCHIVE_PATH="images/archive/$TARGET_FILENAME"
@@ -159,34 +159,15 @@ jobs:
             
             echo "Moving target image to archive: $TARGET_PATH -> $ARCHIVE_PATH"
             
-            # First make sure the target exists before trying to archive it
-            if [ ! -f "$TARGET_PATH" ]; then
-              echo "WARNING: Target file doesn't exist, nothing to archive: $TARGET_PATH"
+            # Simply move the file to archive
+            mv -v "$TARGET_PATH" "$ARCHIVE_PATH"
+            
+            # Verify move operation
+            if [ -f "$ARCHIVE_PATH" ]; then
+              echo "Successfully moved original image to archive:"
+              ls -la "$ARCHIVE_PATH"
             else
-              # Create backup first with cp before attempting mv
-              echo "Creating backup first..."
-              cp -fv "$TARGET_PATH" "$ARCHIVE_PATH"
-              
-              # Verify backup file was created
-              if [ -f "$ARCHIVE_PATH" ]; then
-                echo "Successfully created backup in archive:"
-                ls -la "$ARCHIVE_PATH"
-                
-                # Now remove the original file
-                echo "Removing original target file after backup..."
-                rm -fv "$TARGET_PATH"
-                
-                # Verify removal
-                if [ -f "$TARGET_PATH" ]; then
-                  echo "WARNING: Failed to remove original file after backup. Trying again..."
-                  rm -f "$TARGET_PATH" || echo "ERROR: Could not remove target file even after retry"
-                else
-                  echo "Original file successfully removed after backup"
-                fi
-              else
-                echo "ERROR: Failed to create backup file! Aborting to avoid data loss."
-                exit 1
-              fi
+              echo "WARNING: Failed to move original image to archive."
             fi
           else
             echo "No existing target image to archive"
@@ -199,11 +180,6 @@ jobs:
           # Ensure target directory exists
           mkdir -p "$TARGET_DIR"
           echo "Ensured target directory exists: $TARGET_DIR"
-          
-          # Remove any existing files with the target basename (all extensions)
-          # This is to ensure we don't have duplicates with different extensions
-          echo "Removing any existing files with basename: $TARGET_BASENAME"
-          find "$TARGET_DIR" -name "$TARGET_BASENAME.*" -type f -print -delete
           
           # Check if source image exists before proceeding
           if [ ! -f "$SOURCE_IMAGE" ]; then
@@ -222,48 +198,17 @@ jobs:
           echo "Target dir: $TARGET_DIR_ABS"
           echo "New file: $NEW_FILE_ABS_PATH"
           
-          # Copy the source image to the target location with target basename
-          echo "Copying source image to target location: $SOURCE_ABS_PATH -> $NEW_FILE_ABS_PATH"
-          cp -fv "$SOURCE_ABS_PATH" "$NEW_FILE_ABS_PATH"
+          # Simply rename (move) the source image to the target name
+          echo "Renaming source image to target name: $SOURCE_ABS_PATH -> $NEW_FILE_ABS_PATH"
+          mv -v "$SOURCE_ABS_PATH" "$NEW_FILE_ABS_PATH"
           
-          # Verify copy success
-          if [ ! -f "$NEW_FILE_ABS_PATH" ]; then
-            echo "ERROR: Failed to copy source to new location!"
-            exit 1
-          fi
-          
-          # Add a small modification to the copied file to ensure it's different
-          echo "Adding modification to ensure file is different"
-          echo "<!-- Modified at $(date) -->" >> "$NEW_FILE_ABS_PATH"
-          
-          # Double-check file exists after modification
+          # Verify rename operation
           if [ -f "$NEW_FILE_ABS_PATH" ]; then
-            echo "Successfully copied source to target name:"
+            echo "Successfully renamed source to target name:"
             ls -la "$NEW_FILE_ABS_PATH"
             md5sum "$NEW_FILE_ABS_PATH" || shasum "$NEW_FILE_ABS_PATH"
-            
-            # Remove the original source file after successful copy
-            echo "Removing original source file: $SOURCE_ABS_PATH"
-            rm -fv "$SOURCE_ABS_PATH"
-            
-            # Verify source file removal
-            if [ -f "$SOURCE_ABS_PATH" ]; then
-              echo "WARNING: Failed to remove source file. Trying alternative removal method..."
-              # Try alternative removal method
-              /bin/rm -f "$SOURCE_ABS_PATH"
-              
-              if [ -f "$SOURCE_ABS_PATH" ]; then
-                echo "ERROR: Failed to remove source file even with alternative method."
-                ls -la "$SOURCE_ABS_PATH"
-                echo "Will continue workflow but source file could not be removed."
-              else
-                echo "Successfully removed source file with alternative method."
-              fi
-            else
-              echo "Successfully removed source file."
-            fi
           else
-            echo "ERROR: File doesn't exist after modification! Something went wrong."
+            echo "ERROR: Failed to rename source to target name!"
             exit 1
           fi
           
@@ -279,26 +224,16 @@ jobs:
           echo "TARGET_EXT=$TARGET_EXT" >> $GITHUB_ENV
           echo "SOURCE_EXT=$SOURCE_EXT" >> $GITHUB_ENV
 
-          # Final check for removal of source image - using both relative and absolute paths
-          echo "Final check for removal of source image:"
-          SOURCE_PATHS=("$SOURCE_IMAGE" "$SOURCE_ABS_PATH")
+          # Final check to verify operations were successful
+          echo "Final verification of file operations:"
           
-          for SRC_PATH in "${SOURCE_PATHS[@]}"; do
-            if [ -f "$SRC_PATH" ]; then
-              echo "Source image still exists at $SRC_PATH, attempting final forced removal"
-              chmod 644 "$SRC_PATH" 2>/dev/null  # Try to ensure we have write permissions
-              rm -fv "$SRC_PATH"
-              
-              if [ -f "$SRC_PATH" ]; then
-                echo "WARNING: Could not remove source file at $SRC_PATH even in final attempt"
-                echo "File details:"
-                ls -la "$SRC_PATH"
-                file "$SRC_PATH"
-              else
-                echo "Successfully removed source file at $SRC_PATH in final check"
-              fi
-            fi
-          done
+          # Check that source file no longer exists at original location (it was moved)
+          if [ -f "$SOURCE_IMAGE" ]; then
+            echo "WARNING: Source image still exists at original location: $SOURCE_IMAGE"
+            ls -la "$SOURCE_IMAGE"
+          else
+            echo "Confirmed: Source image no longer exists at original location (successful move)"
+          fi
           
           # Verify new file is present as final check
           if [ ! -f "$NEW_FILE_PATH" ]; then
