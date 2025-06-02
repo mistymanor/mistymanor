@@ -246,6 +246,9 @@ jobs:
           
           # Disable debug output to avoid polluting the rest of the workflow
           set +x
+
+          echo "Cleaning up any other source image variants..."
+          find images -type f -name "$SOURCE_NAME.*" -exec rm -v {} \;
       
       - name: Update configuration file
         run: |
