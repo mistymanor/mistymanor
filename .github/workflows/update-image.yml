@@ -247,8 +247,20 @@ jobs:
           # Disable debug output to avoid polluting the rest of the workflow
           set +x
 
-          echo "Cleaning up any other source image variants..."
-          find images -type f -name "$SOURCE_NAME.*" -exec rm -v {} \;
+          echo "Moving any remaining source image variants to archive..."
+          for src_img in $(find images -maxdepth 1 -type f -name "$SOURCE_NAME.*"); do
+            # Skip if already moved to the target location
+            if [ -f "$src_img" ]; then
+              # Create unique archive name with timestamp if needed
+              ARCHIVE_SRC_NAME="images/archive/$(basename "$src_img")"
+              if [ -f "$ARCHIVE_SRC_NAME" ]; then
+                TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+                ARCHIVE_SRC_NAME="images/archive/${SOURCE_NAME}_${TIMESTAMP}.$(echo "$src_img" | grep -o '\.[^.]*$' | sed 's/\.//')"
+              fi
+              echo "Moving source image to archive: $src_img -> $ARCHIVE_SRC_NAME"
+              mv -v "$src_img" "$ARCHIVE_SRC_NAME"
+            fi
+          done
       
       - name: Update configuration file
         run: |
