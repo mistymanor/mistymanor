@@ -31,11 +31,6 @@
       "category": "Banner"
     },
     {
-      "path": "/home/runner/work/mistymanor/mistymanor/images/MMHorsesBanner.jpeg",
-      "description": "Meet Our Horses Banner",
-      "category": "Banner"
-    },
-    {
       "path": "images/MMContactBanner.jpeg",
       "description": "Contact Page Banner",
       "category": "Banner"
@@ -95,11 +90,6 @@
     {
       "path": "images/MMVolunteersBanner.jpg",
       "description": "Volunteering Banner",
-      "category": "Banner"
-    },
-    {
-      "path": "/home/runner/work/mistymanor/mistymanor/images/MMHorsesBanner.jpeg",
-      "description": "Meet Our Horses Banner",
       "category": "Banner"
     },
     {
