@@ -11,20 +11,24 @@ on:
           - 'Main Banner with Logo (images/MMBannerWithLogo.jpg)'
           - 'Logo for Site Usage (images/MMLogo.png)'
           - 'Tiny Logo for Tab Icon (images/MMIcon.png)'
-          - 'Trail Rides Banner (images/MMTrailRidesBanner.jpeg)'
-          - 'Lessons Banner (images/MMLessonsBanner.jpeg)'
-          - 'Volunteering Banner (images/MMVolunteersBanner.jpg)'
-          - 'Meet Our Horses Banner (images/MMHorsesBanner.jpeg)'
+          - 'Trail Rides Page Banner (images/MMTrailRidesBanner.jpeg)'
+          - 'Lessons Page Banner (images/MMLessonsBanner.jpeg)'
+          - 'Volunteering Page Banner (images/MMVolunteersBanner.jpg)'
           - 'Contact Page Banner (images/MMContactBanner.jpeg)'
           - 'Whats New Page Banner (images/MMWhatsNewBanner.png)'
-          - 'Site Footer Image (images/footer.jpeg)'
-          - 'Cowboy Camp Advertisement (images/CowboyCampAd.jpg)'
-          - 'Hello Spring Promotion Banner (images/HelloSpring.png)'
-          - 'Woodstock Event Advertisement (images/WoodstockAd.png)'
+          - 'Site-wide Footer Image (images/footer.jpeg)'
+          - 'Advertisement 1 (images/HelloSpring.png)'
+          - 'Advertisement 2 (images/CowboyCampAd.jpg)'
+          - 'Advertisement 3 (images/WoodstockAd.png)'
       source_image:
-        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg). WARNING!!! -> This will overwrite any existing image with the same name. ALSO!! -> We currently support image extensions: jpg, jpeg, png, gif, webp. If you need to convert it to one of these, you must do so (can be done online here: https://cloudconvert.com/image-converter). If you change the extension of the image, it will update all references in HTML files.'
+        description: 'Enter source image name without extension (e.g., "MMBanner" for images/MMBanner.jpeg). WARNING!!! -> This will overwrite any existing image with the same name.'
         required: true
         type: string
+      confirm_update:
+        description: 'Webpage by default supports common web image formats: jpg, jpeg, png, gif, webp, svg, avif, ico, apng, tiff, and bmp. If you need to convert your image format, you can use https://cloudconvert.com/image-converter. If you change the extension of the image, the workflow will automatically update all references in HTML files. Type CONFIRM to proceed.'
+        required: true
+        type: string
+        default: 'CONFIRM'
 
 jobs:
   update-image:
