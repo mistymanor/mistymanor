@@ -138,21 +138,25 @@ jobs:
           # Make sure we have the full history
           git fetch --unshallow || true
           
-          # Create a temporary branch for the rollback operation
-          TEMP_BRANCH="rollback-$(date +%Y%m%d%H%M%S)"
-          git checkout -b $TEMP_BRANCH
+          # Get current commit hash for comparison
+          CURRENT_SHA=$(git rev-parse HEAD)
+          TARGET_SHA="${{ needs.find-deployments.outputs.deployment_sha }}"
           
-          # Reset the working directory to the target commit
-          echo "Resetting to target commit: ${{ needs.find-deployments.outputs.deployment_sha }}"
-          git reset --hard ${{ needs.find-deployments.outputs.deployment_sha }}
+          echo "Current commit: $CURRENT_SHA"
+          echo "Target commit: $TARGET_SHA"
           
-          # Create a new commit with the rollback message
-          git add -A
-          git commit -m "$ROLLBACK_MSG"
+          # Check if we're already at the target commit
+          if [ "$CURRENT_SHA" = "$TARGET_SHA" ]; then
+            echo "Already at the target commit. No changes needed."
+            exit 0
+          fi
           
-          # Push the changes to the main branch
-          echo "Pushing rollback changes to main branch"
-          git push --force origin $TEMP_BRANCH:main
+          # Direct push approach - just push the target commit to main
+          echo "Performing direct force-push of target commit to main branch"
+          git push --force origin $TARGET_SHA:main
+          
+          echo "Successfully rolled back to commit: $TARGET_SHA"
+          echo "Rollback description: ${{ needs.find-deployments.outputs.rollback_version }}"
       
       - name: Trigger deployment
         run: |
