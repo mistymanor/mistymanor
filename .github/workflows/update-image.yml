@@ -397,6 +397,9 @@ jobs:
             git rm -f "$ORIGINAL_SOURCE_PATH" || true
           else
             echo "Source file no longer exists at original location (good)"
+            # Critical fix: Even if file was already physically moved/deleted, explicitly tell git about it
+            echo "Removing source file from git tracking"
+            git rm -f "$ORIGINAL_SOURCE_PATH" || echo "Failed to git rm source file that was already moved"
           fi
           
           # Look for any files with the source basename pattern and remove them as well
