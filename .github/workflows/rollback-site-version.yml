@@ -175,36 +175,50 @@ jobs:
             exit 0
           fi
           
-          # Instead of direct force push, create a selective content rollback
-          # This avoids the workflow permissions issue
-          echo "Creating rollback content using git archive and checkout"
-          
-          # Create a temporary branch
-          TEMP_BRANCH="rollback-$(date +%Y%m%d%H%M%S)"
-          git checkout -b $TEMP_BRANCH
-          
-          # Get list of files from target commit, excluding workflow files
-          echo "Extracting files from target commit (excluding workflow files)..."
-          mkdir -p /tmp/rollback_content
-          git archive --format=tar $TARGET_SHA | (cd /tmp/rollback_content && tar xf -)
-          
-          # First remove all current files (except .git and workflows directory)
-          echo "Removing current files (except workflows)..."
-          find . -type f -not -path "./.git/*" -not -path "./.github/workflows/*" -delete
-          
-          # Copy back the files from the target commit
-          echo "Copying files from target commit..."
-          cp -rf /tmp/rollback_content/* .
-          
-          # Add all changes
-          git add -A
-          
-          # Commit the changes
-          git commit -m "$ROLLBACK_MSG"
-          
-          # Push the changes to the main branch
-          echo "Pushing rollback changes to main branch"
-          git push origin $TEMP_BRANCH:main
+          # Check if we're doing an Undo Last Rollback operation
+          if [ "${{ github.event.inputs.rollback_type }}" = "Undo Last Rollback" ]; then
+            echo "Performing Undo Last Rollback - using direct force push method"
+            # For undo rollback, we can simply force push the target commit directly
+            # This is safe because we're specifically trying to reset to a known good state
+            git fetch origin $TARGET_SHA
+            echo "Force pushing $TARGET_SHA directly to main branch"
+            git push --force origin $TARGET_SHA:main
+          else
+            # Standard rollback - use the selective content approach
+            # This avoids the workflow permissions issue
+            echo "Creating rollback content using git archive and checkout"
+            
+            # Create a temporary branch
+            TEMP_BRANCH="rollback-$(date +%Y%m%d%H%M%S)"
+            git checkout -b $TEMP_BRANCH
+            
+            # Get list of files from target commit, excluding workflow files
+            echo "Extracting files from target commit (excluding workflow files)..."
+            mkdir -p /tmp/rollback_content
+            git archive --format=tar $TARGET_SHA | (cd /tmp/rollback_content && tar xf -)
+            
+            # First remove all current files (except .git and workflows directory)
+            echo "Removing current files (except workflows)..."
+            find . -type f -not -path "./.git/*" -not -path "./.github/workflows/*" -delete
+            
+            # Copy back the files from the target commit
+            echo "Copying files from target commit..."
+            cp -rf /tmp/rollback_content/* .
+            
+            # Create a small change to ensure there's something to commit
+            # This is a workaround for the "nothing to commit" issue
+            echo "# Rollback timestamp: $(date)" >> README.md
+            
+            # Add all changes
+            git add -A
+            
+            # Commit the changes
+            git commit -m "$ROLLBACK_MSG"
+            
+            # Push the changes to the main branch
+            echo "Pushing rollback changes to main branch"
+            git push origin $TEMP_BRANCH:main
+          fi
           
           echo "Successfully rolled back to content from commit: $TARGET_SHA"
           echo "Rollback description: ${{ needs.find-deployments.outputs.rollback_version }}"
