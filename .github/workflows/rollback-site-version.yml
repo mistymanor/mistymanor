@@ -3,12 +3,20 @@ name: Rollback to Previous Site Version
 on:
   workflow_dispatch:
     inputs:
+      rollback_type:
+        description: 'Choose rollback action type'
+        required: true
+        type: choice
+        options:
+          - 'Normal Rollback'
+          - 'Undo Last Rollback'
+        default: 'Normal Rollback'
       confirm_rollback:
-        description: 'Type "CONFIRM" to proceed with rolling back to the previous version of the site'
+        description: 'Type "CONFIRM" to proceed with the selected action'
         required: true
         type: string
       rollback_steps:
-        description: 'How many deployments to roll back (usually 1 for previous version)'
+        description: 'For Normal Rollback: How many deployments to roll back (ignored for Undo Last Rollback)'
         required: true
         type: choice
         options:
@@ -36,6 +44,27 @@ jobs:
             echo "Error: You must type 'CONFIRM' to proceed with the rollback."
             echo "This is to prevent accidental rollbacks."
             exit 1
+          fi
+          
+          # Check the rollback type
+          ROLLBACK_TYPE="${{ github.event.inputs.rollback_type }}"
+          echo "Selected rollback type: $ROLLBACK_TYPE"
+          
+          if [ "$ROLLBACK_TYPE" = "Undo Last Rollback" ]; then
+            echo "Finding the latest non-rollback commit to restore the site to its pre-rollback state."
+            
+            # List recent commits, find the last commit before the most recent rollback
+            LAST_NON_ROLLBACK_SHA=$(git log --pretty=format:"%H %s" | grep -B 1 "Rollback to previous site version" | head -n 1 | awk '{print $1}')
+            
+            if [ -z "$LAST_NON_ROLLBACK_SHA" ]; then
+              echo "Error: Could not find the last non-rollback commit."
+              exit 1
+            fi
+            
+            echo "Found last non-rollback commit: $LAST_NON_ROLLBACK_SHA"
+            echo "deployment_sha=$LAST_NON_ROLLBACK_SHA" >> $GITHUB_OUTPUT
+            
+            exit 0
           fi
 
       - name: Find deployment commits
@@ -180,9 +209,10 @@ jobs:
           echo "Rollback description: ${{ needs.find-deployments.outputs.rollback_version }}"
       
       - name: Trigger deployment
-        run: |
-          echo "Triggering deployment of the rolled-back version..."
-          # The deployment will happen automatically when changes are pushed to main
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: "Deploy static content to Pages"
+          token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Rollback complete
         run: |
