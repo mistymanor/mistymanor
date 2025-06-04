@@ -251,9 +251,19 @@ jobs:
           for src_img in $(find images -maxdepth 1 -type f -name "$SOURCE_NAME.*"); do
             if [ -f "$src_img" ]; then
               echo "Removing source image file: $src_img"
-              git rm -f "$src_img" || rm -f "$src_img"
+              # First physically remove the file
+              rm -f "$src_img"
+              # Then tell git about the removal
+              git rm -f --cached "$src_img" || echo "Git rm failed, but file was physically removed"
+              # Create a .gitignore entry to prevent it from being re-added
+              echo "$(basename "$src_img")" >> images/.gitignore
             fi
           done
+
+          # Make sure the .gitignore file is added to the commit
+          if [ -f "images/.gitignore" ]; then
+            git add -f images/.gitignore
+          fi
       
       - name: Update configuration file
         run: |
