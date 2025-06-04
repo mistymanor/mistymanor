@@ -41,19 +41,24 @@ jobs:
       - name: Find deployment commits
         id: find-deployment
         run: |
-          # Simply use the most recent commits for reliable rollback
-          # This ensures we roll back to exactly the nth previous commit
-          echo "Getting recent commit history..."
-          RECENT_COMMITS=$(git log -n 10 --pretty=format:"%H %s")
+          # Get all non-rollback commits for rollback selection
+          # Specifically exclude previous rollback commits when counting steps
+          echo "Getting recent commit history (excluding rollback commits)..."
           
-          echo "Recent commits (will select based on rollback steps):"
-          echo "$RECENT_COMMITS"
+          # Get recent commits but filter out any that are rollbacks themselves
+          # This ensures consecutive rollbacks go further back, not undoing previous rollbacks
+          RECENT_COMMITS=$(git log -n 20 --pretty=format:"%H %s" | grep -v "Rollback to previous site version")
+          
+          # Limit to 10 commits for display
+          echo "Recent commits (excluding previous rollbacks):"
+          echo "$RECENT_COMMITS" | head -n 10
           
           # How many steps back to go based on user input
           STEPS_BACK=${{ github.event.inputs.rollback_steps }}
           
           # Get the commit SHA for the deployment we want to roll back to
           # Using NR==STEPS_BACK+1 to get the commit that's exactly STEPS_BACK before the current one
+          # among non-rollback commits
           ROLLBACK_SHA=$(echo "$RECENT_COMMITS" | awk "NR==$((STEPS_BACK+1)) {print \$1}")
           
           if [ -z "$ROLLBACK_SHA" ]; then
