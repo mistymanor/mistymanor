@@ -41,31 +41,20 @@ jobs:
       - name: Find deployment commits
         id: find-deployment
         run: |
-          # Get the deployment commit history
-          # Look for more patterns in commit messages that indicate deployments
-          DEPLOYMENT_COMMITS=$(git log --pretty=format:"%H %s" | grep -E "[Dd]eploy|[Dd]eployment|GitHub Pages|pages|Pages|deployed")
+          # Simply use the most recent commits for reliable rollback
+          # This ensures we roll back to exactly the nth previous commit
+          echo "Getting recent commit history..."
+          RECENT_COMMITS=$(git log -n 10 --pretty=format:"%H %s")
           
-          # In case we don't find specific deploy messages, fallback to the main branch merge commits
-          if [ -z "$DEPLOYMENT_COMMITS" ]; then
-            echo "No explicit deployment commits found, using merge commits as fallback"
-            DEPLOYMENT_COMMITS=$(git log --pretty=format:"%H %s" | grep -E "Merge pull request")
-          fi
-          
-          # If still no commits found, just use the most recent commits
-          if [ -z "$DEPLOYMENT_COMMITS" ]; then
-            echo "No merge or deployment commits found, using recent commits as fallback"
-            DEPLOYMENT_COMMITS=$(git log -n 10 --pretty=format:"%H %s")
-          fi
-          
-          # Show the commits we found for debugging
-          echo "Found these potential deployment commits:"
-          echo "$DEPLOYMENT_COMMITS" | head -n 5
+          echo "Recent commits (will select based on rollback steps):"
+          echo "$RECENT_COMMITS"
           
           # How many steps back to go based on user input
           STEPS_BACK=${{ github.event.inputs.rollback_steps }}
           
           # Get the commit SHA for the deployment we want to roll back to
-          ROLLBACK_SHA=$(echo "$DEPLOYMENT_COMMITS" | awk "NR==$((STEPS_BACK+1)) {print \$1}")
+          # Using NR==STEPS_BACK+1 to get the commit that's exactly STEPS_BACK before the current one
+          ROLLBACK_SHA=$(echo "$RECENT_COMMITS" | awk "NR==$((STEPS_BACK+1)) {print \$1}")
           
           if [ -z "$ROLLBACK_SHA" ]; then
             echo "Error: Could not find a deployment to roll back to."
