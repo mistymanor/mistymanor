@@ -1,4 +1,4 @@
-name: Rollback to Previous Site Version
+name: ⚠️ Rollback to Previous Site Version
 
 on:
   workflow_dispatch:
@@ -51,18 +51,19 @@ jobs:
           echo "Selected rollback type: $ROLLBACK_TYPE"
           
           if [ "$ROLLBACK_TYPE" = "Undo Last Rollback" ]; then
-            echo "Finding the latest non-rollback commit to restore the site to its pre-rollback state."
+            echo "Finding the commit before the current one to undo the rollback."
             
-            # List recent commits, find the last commit before the most recent rollback
-            LAST_NON_ROLLBACK_SHA=$(git log --pretty=format:"%H %s" | grep -B 1 "Rollback to previous site version" | head -n 1 | awk '{print $1}')
+            # Simply get the commit immediately before the current one
+            # This will be the commit before the rollback
+            PREVIOUS_COMMIT_SHA=$(git log --pretty=format:"%H" -n 2 | tail -n 1)
             
-            if [ -z "$LAST_NON_ROLLBACK_SHA" ]; then
-              echo "Error: Could not find the last non-rollback commit."
+            if [ -z "$PREVIOUS_COMMIT_SHA" ]; then
+              echo "Error: Could not find the previous commit."
               exit 1
             fi
             
-            echo "Found last non-rollback commit: $LAST_NON_ROLLBACK_SHA"
-            echo "deployment_sha=$LAST_NON_ROLLBACK_SHA" >> $GITHUB_OUTPUT
+            echo "Found previous commit: $PREVIOUS_COMMIT_SHA"
+            echo "deployment_sha=$PREVIOUS_COMMIT_SHA" >> $GITHUB_OUTPUT
             
             exit 0
           fi

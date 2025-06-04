@@ -1,4 +1,4 @@
-name: Update Website Image
+name: ✏️ Update Website Image
 
 on:
   workflow_dispatch:
