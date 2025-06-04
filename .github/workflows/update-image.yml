@@ -198,6 +198,10 @@ jobs:
           echo "Target dir: $TARGET_DIR_ABS"
           echo "New file: $NEW_FILE_ABS_PATH"
           
+          # Store the original source path in a variable that will persist through the workflow
+          echo "ORIGINAL_SOURCE_PATH=$SOURCE_IMAGE" >> $GITHUB_ENV
+          echo "Stored original source path for later removal: $SOURCE_IMAGE"
+          
           # Simply rename (move) the source image to the target name
           echo "Renaming source image to target name: $SOURCE_ABS_PATH -> $NEW_FILE_ABS_PATH"
           mv -v "$SOURCE_ABS_PATH" "$NEW_FILE_ABS_PATH"
@@ -248,17 +252,21 @@ jobs:
           set +x
 
           echo "Force removing any remaining source image variants using git rm..."
-          for src_img in $(find images -maxdepth 1 -type f -name "$SOURCE_NAME.*"); do
-            if [ -f "$src_img" ]; then
-              echo "Removing source image file: $src_img"
-              # First physically remove the file
-              rm -f "$src_img"
-              # Then tell git about the removal
-              git rm -f --cached "$src_img" || echo "Git rm failed, but file was physically removed"
-              # Create a .gitignore entry to prevent it from being re-added
-              echo "$(basename "$src_img")" >> images/.gitignore
-            fi
-          done
+          # Critical fix: Use SOURCE_IMAGE variable directly instead of SOURCE_NAME pattern
+          # This ensures we're removing the exact file that was used as the source
+          if [ -f "$SOURCE_IMAGE" ]; then
+            echo "Removing source image file: $SOURCE_IMAGE"
+            # First physically remove the file
+            rm -f "$SOURCE_IMAGE"
+            # Then tell git about the removal
+            git rm -f "$SOURCE_IMAGE" || echo "Git rm failed, but file was physically removed"
+            # Add to staging area to ensure the removal is committed
+            git rm --cached "$SOURCE_IMAGE" || true
+            # Add a .gitignore entry to prevent it from being re-added
+            echo "$(basename "$SOURCE_IMAGE")" >> images/.gitignore
+          else
+            echo "Source image no longer exists: $SOURCE_IMAGE"
+          fi
 
           # Make sure the .gitignore file is added to the commit
           if [ -f "images/.gitignore" ]; then
@@ -379,6 +387,26 @@ jobs:
           ls -la "$UPDATED_IMAGE_PATH" || echo "Target file not found"
           echo "Archive directory:"
           ls -la images/archive/ || echo "Archive directory not found"
+          
+          # IMPORTANT: Explicitly remove the original source image by path
+          echo "===== CHECKING FOR ORIGINAL SOURCE FILE ====="
+          echo "Original source path: $ORIGINAL_SOURCE_PATH"
+          if [ -f "$ORIGINAL_SOURCE_PATH" ]; then
+            echo "Source file still exists, removing it manually"
+            rm -f "$ORIGINAL_SOURCE_PATH"
+            git rm -f "$ORIGINAL_SOURCE_PATH" || true
+          else
+            echo "Source file no longer exists at original location (good)"
+          fi
+          
+          # Look for any files with the source basename pattern and remove them as well
+          SOURCE_BASENAME=$(basename "$ORIGINAL_SOURCE_PATH" | cut -d. -f1)
+          echo "Looking for any files matching pattern $SOURCE_BASENAME.* in images directory"
+          for src_file in $(find images -maxdepth 1 -type f -name "$SOURCE_BASENAME.*"); do
+            echo "Found matching source file: $src_file"
+            rm -f "$src_file"
+            git rm -f "$src_file" || true
+          done
           
           # Show git diff to see what's changed
           echo "===== GIT DIFF BEFORE ADDING FILES ====="
